@@ -1,4 +1,4 @@
 INSERT INTO ROLES (name) VALUES('ROLE_ADMIN');
 INSERT INTO ROLES (name) VALUES('ROLE_STANDARD');
 
--- INSERT INTO USERS (name, surname, telephone_number, email, password)
+-- password: 123456 -> $2a$10$iZZWXRF1TFvTNwq9pobYRO8SmuQ9ALEDGtEy4iXNG.bihvOwEJttu

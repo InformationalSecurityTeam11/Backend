@@ -70,8 +70,9 @@ public class WebSecurityConfig {
         http.csrf().disable();
         http.cors();
         http.headers().frameOptions().disable();
-        http.authorizeHttpRequests().
-                requestMatchers(toH2Console()).permitAll().
+        http.authorizeHttpRequests()
+                .requestMatchers(HttpMethod.POST, "/api/user/register").permitAll()
+                .requestMatchers(toH2Console()).permitAll().
                 anyRequest().authenticated().and()
                 .exceptionHandling().accessDeniedHandler(this.restAccessDeniedHandler).and()
                 .exceptionHandling().authenticationEntryPoint(this.restAuthenticationEntryPoint).and()
