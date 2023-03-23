@@ -45,7 +45,6 @@ public class StandardUserServiceImpl implements StandardUserService{
             throw new BadRequestException("User with given email already exists");
         }
         Optional<StandardUser> test = standardUserRepository.findById(1);
-        System.out.println(test.get().getUserType());
         return user;
     }
 }

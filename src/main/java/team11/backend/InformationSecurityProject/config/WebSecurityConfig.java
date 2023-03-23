@@ -72,6 +72,7 @@ public class WebSecurityConfig {
         http.headers().frameOptions().disable();
         http.authorizeHttpRequests()
                 .requestMatchers(HttpMethod.POST, "/api/user/register").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/user/login").permitAll()
                 .requestMatchers(toH2Console()).permitAll().
                 anyRequest().authenticated().and()
                 .exceptionHandling().accessDeniedHandler(this.restAccessDeniedHandler).and()
