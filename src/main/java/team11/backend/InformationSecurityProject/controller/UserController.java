@@ -5,15 +5,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import team11.backend.InformationSecurityProject.dto.LoginCredentials;
 import team11.backend.InformationSecurityProject.dto.TokenStateOut;
 import team11.backend.InformationSecurityProject.dto.UserIn;
@@ -71,6 +69,19 @@ public class UserController {
         String jwt = this.tokenUtils.generateToken(user);
         String refreshToken = this.refreshTokenService.createRefreshToken(user).getToken();
         return new ResponseEntity<>(new TokenStateOut(jwt, refreshToken), HttpStatus.OK);
+    }
+
+    @GetMapping(
+            value = "/logout",
+            produces = MediaType.TEXT_PLAIN_VALUE
+    )
+    public ResponseEntity<?> logout(){
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if(!(auth instanceof AnonymousAuthenticationToken)){
+            SecurityContextHolder.clearContext();
+            return new ResponseEntity<>("Logout successful", HttpStatus.OK);
+        }
+        throw new BadRequestException("User is not authenticated");
     }
 
 }
