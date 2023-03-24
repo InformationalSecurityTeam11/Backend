@@ -1,4 +1,4 @@
-package team11.backend.InformationSecurityProject.service;
+package team11.backend.InformationSecurityProject.repository;
 
 import java.io.*;
 import java.security.*;
@@ -9,7 +9,9 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 
-public class KeyStoreService {
+public class KeyStoreRepository {
+
+    KeyStore defaultKeystore;
 
     public KeyStore createKeyStore(String password) throws KeyStoreException, CertificateException, IOException, NoSuchAlgorithmException {
         // Create a new empty keystore instance
@@ -92,6 +94,11 @@ public class KeyStoreService {
         return chain;
     }
 
+    public KeyStore getDefaultKeystore() {
+        return defaultKeystore;
+    }
 
-
+    public void setDefaultKeystore(KeyStore defaultKeystore) {
+        this.defaultKeystore = defaultKeystore;
+    }
 }

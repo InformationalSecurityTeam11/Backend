@@ -18,6 +18,7 @@ import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
+import org.springframework.stereotype.Component;
 
 import java.io.FileOutputStream;
 import java.math.BigInteger;
@@ -26,21 +27,23 @@ import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
+@Component
 public class CertificateService {
 
     /**
-     * Creates a self-signed X.509 certificate with the given key pair, subject name, validity period, and serial number.
+     * Creates a self-signed X.509 certificate with the given key pair, subject name and validity period.
      *
      * @param keyPair the key pair to use for the certificate
      * @param subject the subject name for the certificate
      * @param days the number of days the certificate is valid for
-     * @param serial the serial number for the certificate
      * @return a self-signed X.509 certificate
      * @throws Exception if an error occurs while creating the certificate
      */
-    public X509Certificate createSelfSignedCertificate(KeyPair keyPair, X500Name subject, int days, BigInteger serial) throws Exception {
+    public X509Certificate createSelfSignedCertificate(KeyPair keyPair, X500Name subject, int days) throws Exception {
+        // Generate a serial number based on timestamp
+        BigInteger serialNumber = BigInteger.valueOf(System.currentTimeMillis());
 
-        X509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(subject, serial, new Date(), new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(days)), subject, keyPair.getPublic());
+        X509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(subject, serialNumber, new Date(), new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(days)), subject, keyPair.getPublic());
 
         // Add the basic constraints extension to make it a CA certificate
         certBuilder.addExtension(Extension.basicConstraints, true, new BasicConstraints(true));
