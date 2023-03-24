@@ -20,7 +20,7 @@ public class CertificateRequest {
     private Certificate parent;
 
     @Column(name = "creation_date", nullable = false)
-    private LocalDateTime creationDate;
+    private LocalDateTime creationTime;
 
     @Column(name = "is_accepted", nullable = false)
     private Boolean isAccepted;
