@@ -1,4 +1,4 @@
-package team11.backend.InformationSecurityProject.service;
+package team11.backend.InformationSecurityProject.service.interfaces;
 
 import team11.backend.InformationSecurityProject.model.User;
 
