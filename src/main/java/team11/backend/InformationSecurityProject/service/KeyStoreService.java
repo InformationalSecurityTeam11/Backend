@@ -1,4 +1,4 @@
-package team11.backend.InformationSecurityProject.repository;
+package team11.backend.InformationSecurityProject.service;
 
 import java.io.*;
 import java.security.*;
@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 
-public class KeyStoreRepository {
+public class KeyStoreService {
 
     KeyStore defaultKeystore;
 
