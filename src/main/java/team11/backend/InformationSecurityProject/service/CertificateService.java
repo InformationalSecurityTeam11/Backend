@@ -1,6 +1,5 @@
 package team11.backend.InformationSecurityProject.service;
 
-import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.X509CertificateHolder;
@@ -8,28 +7,29 @@ import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
-import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
-import org.bouncycastle.crypto.util.PrivateKeyFactory;
-import org.bouncycastle.crypto.util.SubjectPublicKeyInfoFactory;
 import org.bouncycastle.operator.ContentSigner;
-import org.bouncycastle.operator.ContentVerifierProvider;
-import org.bouncycastle.operator.OperatorCreationException;
-import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder;
-import org.bouncycastle.pkcs.PKCS10CertificationRequest;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+import team11.backend.InformationSecurityProject.dto.CertificateInfoDTO;
+import team11.backend.InformationSecurityProject.model.Certificate;
+import team11.backend.InformationSecurityProject.repository.CertificateRepository;
 import team11.backend.InformationSecurityProject.service.interfaces.ICertificateService;
 
-import java.io.FileOutputStream;
 import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.X509Certificate;
-import java.util.Date;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-@Component
+@Service
 public class CertificateService implements ICertificateService {
+
+    private final CertificateRepository certificateRepository;
+
+    public CertificateService(CertificateRepository certificateRepository) {
+        this.certificateRepository = certificateRepository;
+    }
+
 
     /**
      * Creates a self-signed X.509 certificate with the given key pair, subject name and validity period.
@@ -109,6 +109,22 @@ public class CertificateService implements ICertificateService {
         certificate.verify(expectedSignerPublicKey);
 
         return true;
+    }
+
+    @Override
+    public List<Certificate> getAll() {
+        return this.certificateRepository.findAll();
+    }
+
+    @Override
+    public Set<CertificateInfoDTO> getCertificatesDTOS(List<Certificate> certificates) {
+        if(certificates.size() == 0) return null;
+        Set<CertificateInfoDTO> certificateInfoDTOS = new HashSet<>();
+        for(Certificate certificate : certificates){
+            certificateInfoDTOS.add(new CertificateInfoDTO(certificate));
+        }
+        return certificateInfoDTOS;
+
     }
 
     private boolean isCertificateRevoked(X509Certificate certificate) {
