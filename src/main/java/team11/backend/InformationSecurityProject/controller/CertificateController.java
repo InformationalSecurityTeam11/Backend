@@ -11,12 +11,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import team11.backend.InformationSecurityProject.dto.CertificateInfoDTO;
 import team11.backend.InformationSecurityProject.dto.SubjectInfoDTO;
+import team11.backend.InformationSecurityProject.model.Certificate;
 import team11.backend.InformationSecurityProject.service.CertificateService;
 import team11.backend.InformationSecurityProject.service.interfaces.ICertificateService;
 import team11.backend.InformationSecurityProject.utils.CertificateUtility;
 
 import java.security.KeyPair;
 import java.security.cert.X509Certificate;
+import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/certificates")
@@ -53,8 +56,9 @@ public class CertificateController {
 
     @GetMapping
     @PreAuthorize("permitAll()")
-    public ResponseEntity<CertificateInfoDTO> getAllCertificates() {
-        return null;
+    public ResponseEntity<Set<CertificateInfoDTO>> getAllCertificates() {
+        List<Certificate> certificates = this.certificateService.getAll();
+        return new ResponseEntity<>(this.certificateService.getCertificatesDTOS(certificates), HttpStatus.OK);
     }
 
 
