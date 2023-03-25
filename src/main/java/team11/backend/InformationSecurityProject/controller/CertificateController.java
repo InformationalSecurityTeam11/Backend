@@ -9,8 +9,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import team11.backend.InformationSecurityProject.dto.CertificateInfoDTO;
 import team11.backend.InformationSecurityProject.dto.SubjectInfoDTO;
 import team11.backend.InformationSecurityProject.service.CertificateService;
+import team11.backend.InformationSecurityProject.service.interfaces.ICertificateService;
 import team11.backend.InformationSecurityProject.utils.CertificateUtility;
 
 import java.security.KeyPair;
@@ -19,8 +21,14 @@ import java.security.cert.X509Certificate;
 @RestController
 @RequestMapping("/certificates")
 public class CertificateController {
+
+    private final ICertificateService certificateService;
+
     @Autowired
-    private CertificateService certificateService;
+    public CertificateController(ICertificateService certificateService) {
+        this.certificateService = certificateService;
+    }
+
 
     @PreAuthorize("permitAll()")
     @PostMapping("/self-signed")
@@ -36,8 +44,6 @@ public class CertificateController {
         }
     }
 
-
-
     @PreAuthorize("permitAll()")
     @GetMapping
     public ResponseEntity testic() {
@@ -45,6 +51,11 @@ public class CertificateController {
     }
 
 
+    @GetMapping
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<CertificateInfoDTO> getAllCertificates() {
+        return null;
+    }
 
 
 
