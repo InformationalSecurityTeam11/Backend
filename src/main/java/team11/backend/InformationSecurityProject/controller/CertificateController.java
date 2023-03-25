@@ -5,10 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import team11.backend.InformationSecurityProject.dto.CertificateInfoDTO;
 import team11.backend.InformationSecurityProject.dto.SubjectInfoDTO;
 import team11.backend.InformationSecurityProject.model.Certificate;
@@ -21,6 +18,7 @@ import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Set;
 
+@CrossOrigin
 @RestController
 @RequestMapping("/certificates")
 public class CertificateController {
@@ -45,12 +43,6 @@ public class CertificateController {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-    }
-
-    @PreAuthorize("permitAll()")
-    @GetMapping
-    public ResponseEntity testic() {
-        return ResponseEntity.status(HttpStatus.OK).body("mjau");
     }
 
 
