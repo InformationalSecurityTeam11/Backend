@@ -6,7 +6,7 @@ import team11.backend.InformationSecurityProject.exceptions.ForbiddenException;
 import team11.backend.InformationSecurityProject.exceptions.NotFoundException;
 import team11.backend.InformationSecurityProject.model.RefreshToken;
 import team11.backend.InformationSecurityProject.model.User;
-import team11.backend.InformationSecurityProject.service.UserService;
+import team11.backend.InformationSecurityProject.service.interfaces.UserService;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
