@@ -19,6 +19,7 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.springframework.stereotype.Component;
+import team11.backend.InformationSecurityProject.service.interfaces.ICertificateService;
 
 import java.io.FileOutputStream;
 import java.math.BigInteger;
@@ -28,7 +29,7 @@ import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 @Component
-public class CertificateService {
+public class CertificateService implements ICertificateService {
 
     /**
      * Creates a self-signed X.509 certificate with the given key pair, subject name and validity period.
