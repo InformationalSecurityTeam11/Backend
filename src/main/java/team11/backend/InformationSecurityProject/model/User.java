@@ -15,6 +15,7 @@ import java.util.*;
 @Table(name="users")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "user_type", discriminatorType = DiscriminatorType.STRING)
+
 public abstract class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,16 +35,22 @@ public abstract class User implements UserDetails {
     private List<String> oldPasswords;
     @Column(name = "password", nullable = false)
     private String password;
-    public void setPassword(String password){
-        Timestamp now = new Timestamp((new Date()).getTime());
-        this.setLastPasswordResetDate(now);
-        this.password = password;
-    }
+
     @Column(name = "last_password_reset_date")
     private Timestamp lastPasswordResetDate;
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
+
+
+    public void setPassword(String password){
+        Timestamp now = new Timestamp((new Date()).getTime());
+        this.setLastPasswordResetDate(now);
+        this.password = password;
+    }
+
+
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
