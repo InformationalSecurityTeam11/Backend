@@ -15,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import team11.backend.InformationSecurityProject.security.RestAccessDeniedHandler;
 import team11.backend.InformationSecurityProject.security.RestAuthenticationEntryPoint;
 import team11.backend.InformationSecurityProject.security.TokenAuthenticationFilter;
