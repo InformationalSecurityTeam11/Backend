@@ -14,7 +14,7 @@
 	<name>InformationSecurityProject</name>
 	<description>Projekat iz informacione bezbednosti - tim 11</description>
 	<properties>
-		<java.version>18</java.version>
+		<java.version>19</java.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -60,11 +60,6 @@
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>org.bouncycastle</groupId>
-			<artifactId>bcpkix-jdk15on</artifactId>
-			<version>1.69</version>
-		</dependency>
 	</dependencies>
 
 	<build>
@@ -83,6 +78,5 @@
 			</plugin>
 		</plugins>
 	</build>
-
 
 </project>
