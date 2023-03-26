@@ -53,7 +53,7 @@ public class TokenUtils {
      * @return JWT token
      */
     public String generateToken(User user) {
-        return Jwts.builder().claim("id", user.getId()).claim("role", user.getRole()).claim("type","Bearer").claim("email", user.getEmail())
+        return Jwts.builder().claim("id", user.getId()).claim("role", user.getUserType()).claim("type","Bearer").claim("email", user.getEmail())
                 .setIssuer(APP_NAME)
                 .setSubject(user.getUsername())
                 .setAudience(generateAudience())

@@ -8,3 +8,4 @@ VALUES ('STANDARD','aleksandrab024@hotmail.com', '2023-04-01T04:49:27Z', 'Aleksa
        ('ADMIN','veljkovex@gmail.com', '2023-04-01T04:49:27Z', 'Veljko', 'password3', 'Bubnjevic', '0612638823', '1');
 
 
+-- password: 123456 -> $2a$10$iZZWXRF1TFvTNwq9pobYRO8SmuQ9ALEDGtEy4iXNG.bihvOwEJttu

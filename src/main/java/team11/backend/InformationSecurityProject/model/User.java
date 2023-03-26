@@ -2,7 +2,9 @@ package team11.backend.InformationSecurityProject.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -86,4 +88,5 @@ public abstract class User implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
 }

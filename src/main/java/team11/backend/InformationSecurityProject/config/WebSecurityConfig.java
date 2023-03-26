@@ -72,9 +72,10 @@ public class WebSecurityConfig {
         http.cors();
         http.headers().frameOptions().disable();
         http.authorizeHttpRequests()
-                .requestMatchers(new AntPathRequestMatcher("/h2-console/**")).permitAll()
-                .requestMatchers(toH2Console()).permitAll()
-                .anyRequest().authenticated().and()
+                .requestMatchers(HttpMethod.POST, "/api/user/register").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/user/login").permitAll()
+                .requestMatchers(toH2Console()).permitAll().
+                anyRequest().authenticated().and()
                 .exceptionHandling().accessDeniedHandler(this.restAccessDeniedHandler).and()
                 .exceptionHandling().authenticationEntryPoint(this.restAuthenticationEntryPoint).and()
                 .addFilterBefore(new TokenAuthenticationFilter(this.tokenUtils, this.userDetailsService()),
