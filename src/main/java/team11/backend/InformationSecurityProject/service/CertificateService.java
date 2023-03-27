@@ -13,11 +13,15 @@ import org.springframework.stereotype.Service;
 import team11.backend.InformationSecurityProject.dto.CertificateInfoDTO;
 import team11.backend.InformationSecurityProject.model.Certificate;
 import team11.backend.InformationSecurityProject.repository.CertificateRepository;
+import team11.backend.InformationSecurityProject.repository.KeyStoreRepository;
+import team11.backend.InformationSecurityProject.service.interfaces.CertificatePreviewService;
 import team11.backend.InformationSecurityProject.service.interfaces.ICertificateService;
+import team11.backend.InformationSecurityProject.utils.CertificateUtility;
 
 import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.X509Certificate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -25,11 +29,14 @@ import java.util.concurrent.TimeUnit;
 public class CertificateService implements ICertificateService {
 
     private final CertificateRepository certificateRepository;
+    private final KeyStoreRepository keyStoreRepository;
+    private final CertificateUtility certificateUtility;
 
-    public CertificateService(CertificateRepository certificateRepository) {
+    public CertificateService(CertificateRepository certificateRepository, KeyStoreRepository keyStoreRepository, CertificateUtility certificateUtility, CertificatePreviewService certificatePreviewService) {
         this.certificateRepository = certificateRepository;
+        this.keyStoreRepository = keyStoreRepository;
+        this.certificateUtility = certificateUtility;
     }
-
 
     /**
      * Creates a self-signed X.509 certificate with the given key pair, subject name and validity period.
@@ -58,35 +65,70 @@ public class CertificateService implements ICertificateService {
         X509CertificateHolder certHolder = certBuilder.build(signer);
         return new JcaX509CertificateConverter().getCertificate(certHolder);
     }
+
     /**
      * Creates a new X.509 certificate signed by the provided CA certificate and private key,
      * using the provided key pair and subject information. The certificate is valid for the
      * specified number of days and has the given serial number. The function returns the
      * newly created certificate as an X509Certificate object.
      *
-     * @param caCert the X.509 certificate of the Certificate Authority (CA) that will sign the certificate
-     * @param caPrivateKey the private key of the CA used to sign the certificate
-     * @param keyPair the key pair of the entity requesting the certificate
-     * @param subject the subject name of the entity requesting the certificate
-     * @param days the number of days that the certificate will be valid
-     * @param serial the serial number of the certificate
+     * @param subject             the subject name of the entity requesting the certificate
+     * @param days                the number of days that the certificate will be valid
      * @return the newly created X509Certificate object
      * @throws Exception if there is an error creating the certificate
      */
-    public X509Certificate createCertificate(X509Certificate caCert, PrivateKey caPrivateKey, KeyPair keyPair, X500Name subject, int days, BigInteger serial) throws Exception {
-        X509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(caCert, serial, new Date(), new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(days)), subject, keyPair.getPublic());
+    @Override
+    public X509Certificate createCertificate(BigInteger parentCertificateSerial, X500Name subject, int days) throws Exception {
+        X509Certificate caCert;
+        PrivateKey caPrivateKey;
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime expireDate = now.plusDays(days);
+
+        BigInteger serialNumber = BigInteger.valueOf(now.getNano());
+        KeyPair keyPairIssuer = certificateUtility.generateKeyPair();
+
+        if(parentCertificateSerial != null){
+            Optional<java.security.cert.Certificate> caCertOpt = keyStoreRepository.getCertificate(parentCertificateSerial);
+            if(caCertOpt.isEmpty()){
+                throw new RuntimeException("Certificate associated with parentCertificateID not found");
+            }
+            caCert = (X509Certificate) caCertOpt.get();
+            caPrivateKey = keyStoreRepository.getPrivateKey(parentCertificateSerial);
+        }
+        else{
+            caCert = null;
+            caPrivateKey = keyPairIssuer.getPrivate();
+        }
+
+        Date nowDateLegacy = java.sql.Timestamp.valueOf(now);
+        Date expireDateLegacy = java.sql.Timestamp.valueOf(expireDate);
+
+        X509v3CertificateBuilder certBuilder;
+        if(parentCertificateSerial != null){
+            certBuilder = new JcaX509v3CertificateBuilder(caCert, serialNumber, nowDateLegacy, expireDateLegacy, subject, keyPairIssuer.getPublic());
+        }
+        else {
+            certBuilder = new JcaX509v3CertificateBuilder(subject, serialNumber, nowDateLegacy, expireDateLegacy, subject, keyPairIssuer.getPublic());
+        }
 
         // Add the basic constraints extension to make it a non-CA certificate
         certBuilder.addExtension(Extension.basicConstraints, true, new BasicConstraints(false));
 
         // Add the subject key identifier extension
         JcaX509ExtensionUtils extUtils = new JcaX509ExtensionUtils();
-        certBuilder.addExtension(Extension.subjectKeyIdentifier, false, extUtils.createSubjectKeyIdentifier(keyPair.getPublic()));
+        certBuilder.addExtension(Extension.subjectKeyIdentifier, false, extUtils.createSubjectKeyIdentifier(keyPairIssuer.getPublic()));
 
         // Sign the certificate
         ContentSigner signer = new JcaContentSignerBuilder("SHA256WithRSAEncryption").build(caPrivateKey);
         X509CertificateHolder certHolder = certBuilder.build(signer);
-        return new JcaX509CertificateConverter().getCertificate(certHolder);
+
+        X509Certificate cert = new JcaX509CertificateConverter().getCertificate(certHolder);
+
+        keyStoreRepository.saveCertificate(cert, serialNumber);
+        keyStoreRepository.savePrivateKey(serialNumber, keyPairIssuer.getPrivate());
+
+        return cert;
     }
 
     /**

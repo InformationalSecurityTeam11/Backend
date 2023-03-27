@@ -21,7 +21,7 @@ import team11.backend.InformationSecurityProject.model.StandardUser;
 import team11.backend.InformationSecurityProject.model.User;
 import team11.backend.InformationSecurityProject.security.RefreshTokenService;
 import team11.backend.InformationSecurityProject.security.TokenUtils;
-import team11.backend.InformationSecurityProject.service.StandardUserService;
+import team11.backend.InformationSecurityProject.service.interfaces.StandardUserService;
 
 @RestController
 @RequestMapping("/api/user")
