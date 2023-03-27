@@ -7,6 +7,7 @@ import team11.backend.InformationSecurityProject.model.Certificate;
 import team11.backend.InformationSecurityProject.model.CertificateType;
 import team11.backend.InformationSecurityProject.model.User;
 
+import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.cert.X509Certificate;
 import java.util.List;
@@ -16,8 +17,7 @@ public interface ICertificateService {
 
     X509Certificate createSelfSignedCertificate(KeyPair keyPair, X500Name subject, int days) throws Exception;
 
-
-    CertificatePair createCertificate(Integer parentCertificateID, X500Name subject, int days, User owner, CertificateType type) throws Exception;
+    X509Certificate createCertificate(BigInteger parentCertificateSerial, X500Name subject, int days) throws Exception;
 
     boolean validateCertificate(X509Certificate certificate, X509Certificate expectedSigner) throws Exception;
     List<Certificate> getAll();

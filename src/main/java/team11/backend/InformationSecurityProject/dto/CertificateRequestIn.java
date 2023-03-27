@@ -5,10 +5,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import team11.backend.InformationSecurityProject.model.CertificateType;
 
+import java.math.BigInteger;
+
 @Data
 @NoArgsConstructor
 public class CertificateRequestIn {
-    private Integer parentCertificateId;
+    private BigInteger parentCertificateSerialNumber;
     @NotNull(message = "Field (certificateType) is required")
     private CertificateType certificateType;
     private String organization;

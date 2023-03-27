@@ -22,10 +22,8 @@ import java.security.KeyPair;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Set;
-
-@CrossOrigin
 @RestController
-@RequestMapping("/certificates")
+@RequestMapping("/api/certificate")
 public class CertificateController {
 
     private final ICertificateService certificateService;
@@ -55,9 +53,10 @@ public class CertificateController {
     }
 
     @PostMapping(
-        name = "/request",
+        value = "/request",
         consumes = MediaType.APPLICATION_JSON_VALUE
     )
+    @PreAuthorize("hasAnyRole('STANDARD', 'ADMIN')")
     public ResponseEntity<CertificateRequestOut> createCertificateRequest(@RequestBody @Valid CertificateRequestIn certificateRequestDTO){
         CertificateRequest certificateRequest = certificateRequestService.createRequest(certificateRequestDTO);
         return new ResponseEntity<>(new CertificateRequestOut(certificateRequest), HttpStatus.OK);

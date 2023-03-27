@@ -3,12 +3,12 @@ package team11.backend.InformationSecurityProject.service;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import team11.backend.InformationSecurityProject.dto.CertificatePair;
 import team11.backend.InformationSecurityProject.dto.CertificateRequestIn;
 import team11.backend.InformationSecurityProject.exceptions.BadRequestException;
 import team11.backend.InformationSecurityProject.model.*;
@@ -17,7 +17,10 @@ import team11.backend.InformationSecurityProject.service.interfaces.CertificateP
 import team11.backend.InformationSecurityProject.service.interfaces.CertificateRequestService;
 import team11.backend.InformationSecurityProject.service.interfaces.ICertificateService;
 
+import java.math.BigInteger;
+import java.security.cert.X509Certificate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Objects;
 
 @Service
@@ -59,34 +62,65 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
         if(user.getUserType().equals("STANDARD") && certificateRequestDTO.getCertificateType() == CertificateType.ROOT){
             throw new BadRequestException("Standard user cannot request root certificate");
         }
+        BigInteger caSerial;
+        Certificate parent;
+        if(certificateRequestDTO.getCertificateType() == CertificateType.ROOT){
+            caSerial = null;
+            parent = null;
+        }else {
+            parent = certificatePreviewService.getBySerial(certificateRequestDTO.getParentCertificateSerialNumber());
+            if(parent.getType() == CertificateType.ROOT || parent.getType() == CertificateType.INTERMEDIATE){
+                caSerial = certificateRequestDTO.getParentCertificateSerialNumber();
+            }else {
+                throw new BadRequestException("Given certificate cannot issue new certificates");
+            }
+        }
 
-        Certificate parent = certificatePreviewService.get(certificateRequestDTO.getParentCertificateId());
         CertificateRequest certificateRequest = new CertificateRequest();
 
         certificateRequest.setParent(parent);
         certificateRequest.setCertificateType(certificateRequestDTO.getCertificateType());
         certificateRequest.setCreationTime(LocalDateTime.now());
+        certificateRequest.setIsAccepted(false);
+        certificateRequest.setOrganization(certificateRequestDTO.getOrganization());
+        certificateRequest.setOrganizationUnit(certificateRequest.getOrganizationUnit());
         certificateRequest.setOwner(user);
 
-        CertificateRequest certificateRequestSaved = certificateRequestRepository.save(certificateRequest);
 
-        X500Name subject = generateX500Name(user.getName(),
-                user.getSurname(),
-                user.getEmail(),
-                user.getId().toString(),
-                certificateRequestDTO.getOrganization(),
-                certificateRequestDTO.getOrganizationUnit());
-        if(user.getUserType().equals("ADMIN") || Objects.equals(user.getId(), parent.getUser().getId()) ){
+
+        if(user.getUserType().equals("ADMIN") || Objects.equals(user.getId(), Objects.requireNonNull(parent).getUser().getId()) ){
+            X500Name subject = generateX500Name(user.getName(),
+                    user.getSurname(),
+                    user.getEmail(),
+                    user.getId().toString(),
+                    certificateRequestDTO.getOrganization(),
+                    certificateRequestDTO.getOrganizationUnit());
             try {
-                CertificatePair pair = certificateService.createCertificate(parent.getId(), subject, 30, user, certificateRequestDTO.getCertificateType());
+                X509Certificate certificate = certificateService.createCertificate(caSerial, subject, 30);
                 certificateRequest.setIsAccepted(true);
-                certificateRequest.setLinkedCertificate(pair.getCertPreview());
+                certificateRequest.setAcceptanceTime(LocalDateTime.now());
+
+                Certificate certPreview = new Certificate();
+                certPreview.setType(certificateRequestDTO.getCertificateType());
+                certPreview.setUser(user);
+                certPreview.setStartDate(
+                        certificate.getNotBefore()
+                                .toInstant().atZone(ZoneId.systemDefault())
+                                .toLocalDateTime()
+                );
+                certPreview.setExpireDate(
+                        certificate.getNotAfter()
+                                .toInstant().atZone(ZoneId.systemDefault())
+                                .toLocalDateTime()
+                );
+                certPreview.setSerialNumber(certificate.getSerialNumber());
+
+                certificateRequest.setLinkedCertificate(certificatePreviewService.insert(certPreview));
             } catch (Exception e) {
                 throw new BadRequestException(e.getMessage());
             }
         }
-
-        return certificateRequestSaved;
+        return certificateRequestRepository.save(certificateRequest);
     }
 
     @Override
