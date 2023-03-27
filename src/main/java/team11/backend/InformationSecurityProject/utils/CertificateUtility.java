@@ -3,22 +3,26 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x500.style.RFC4519Style;
+import org.springframework.stereotype.Service;
 import team11.backend.InformationSecurityProject.dto.SubjectInfoDTO;
 
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
 
+@Service
 public class CertificateUtility {
 
-    public static KeyPair generateKeyPair() throws NoSuchAlgorithmException {
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-        keyPairGenerator.initialize(2048);
-        KeyPair keyPair = keyPairGenerator.generateKeyPair();
-        return keyPair;
+    public CertificateUtility(){
+
     }
 
-    public static X500Name generateX500Name(SubjectInfoDTO subjectInfo) {
+    public KeyPair generateKeyPair() throws NoSuchAlgorithmException, NoSuchProviderException {
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        SecureRandom random = SecureRandom.getInstance("SHA1PRNG", "SUN");
+        keyPairGenerator.initialize(2048, random);
+        return keyPairGenerator.generateKeyPair();
+    }
+
+    public X500Name generateX500Name(SubjectInfoDTO subjectInfo) {
         // Create a new X500NameBuilder and set the required fields
         X500NameBuilder builder = new X500NameBuilder(RFC4519Style.INSTANCE)
                 .addRDN(BCStyle.CN, subjectInfo.getCommonName())

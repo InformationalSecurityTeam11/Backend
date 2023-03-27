@@ -9,11 +9,13 @@ import team11.backend.InformationSecurityProject.exceptions.BadRequestException;
 import team11.backend.InformationSecurityProject.model.Role;
 import team11.backend.InformationSecurityProject.model.StandardUser;
 import team11.backend.InformationSecurityProject.repository.StandardUserRepository;
+import team11.backend.InformationSecurityProject.service.interfaces.RoleService;
+import team11.backend.InformationSecurityProject.service.interfaces.StandardUserService;
 
 import java.util.Optional;
 
 @Service
-public class StandardUserServiceImpl implements StandardUserService{
+public class StandardUserServiceImpl implements StandardUserService {
 
     private final BCryptPasswordEncoder passwordEncoder;
     private final StandardUserRepository standardUserRepository;

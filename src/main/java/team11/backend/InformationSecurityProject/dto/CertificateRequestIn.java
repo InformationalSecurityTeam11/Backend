@@ -8,10 +8,10 @@ import team11.backend.InformationSecurityProject.model.CertificateType;
 @Data
 @NoArgsConstructor
 public class CertificateRequestIn {
-
     private Integer parentCertificateId;
-
     @NotNull(message = "Field (certificateType) is required")
     private CertificateType certificateType;
+    private String organization;
+    private String organizationUnit;
 
 }

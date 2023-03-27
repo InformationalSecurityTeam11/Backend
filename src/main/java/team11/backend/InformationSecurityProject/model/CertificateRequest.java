@@ -40,6 +40,12 @@ public class CertificateRequest {
     @Column(name = "certificate_type", nullable = false)
     private CertificateType certificateType;
 
+    @Column(name = "organization")
+    private String organization;
+
+    @Column(name = "organization_unit")
+    private String organizationUnit;
+
     public void setIsAccepted(Boolean isAccepted){
         if(isAccepted){
             this.acceptanceTime = LocalDateTime.now();
