@@ -46,7 +46,7 @@ public class StandardUserServiceImpl implements StandardUserService {
         }catch (DataIntegrityViolationException e){
             throw new BadRequestException("User with given email already exists");
         }
-        Optional<StandardUser> test = standardUserRepository.findById(1);
+
         return user;
     }
 }
