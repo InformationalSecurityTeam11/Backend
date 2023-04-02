@@ -37,21 +37,6 @@ public class CertificateController {
         this.certificateUtility = certificateUtility;
     }
 
-
-    @PreAuthorize("permitAll()")
-    @PostMapping("/self-signed")
-    public ResponseEntity<X509Certificate> generateSelfSignedCertificate(SubjectInfoDTO subjectInfo) {
-        try {
-            KeyPair keyPair = certificateUtility.generateKeyPair();
-            X500Name subject = certificateUtility.generateX500Name(subjectInfo);
-            X509Certificate certificate = certificateService.createSelfSignedCertificate(keyPair, subject, 365);
-            return ResponseEntity.ok().body(certificate);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
     @PostMapping(
         value = "/request",
         consumes = MediaType.APPLICATION_JSON_VALUE
