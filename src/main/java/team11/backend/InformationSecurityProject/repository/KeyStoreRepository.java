@@ -29,16 +29,8 @@ public class KeyStoreRepository {
     public PrivateKey getPrivateKey(BigInteger certificateSerial){
         try {
             loadKeyStore();
-            PrivateKey key = (PrivateKey) keyStore.getKey(getKeyAliasFromSerial(certificateSerial), SECRET.toCharArray());
-            return key;
-        } catch (NoSuchAlgorithmException e) {
-            System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-            throw new RuntimeException(e);
-        }catch (KeyStoreException e){
-            System.out.println("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
-            throw new RuntimeException(e);
-        }catch (UnrecoverableKeyException e){
-            System.out.println("ccccccccccccccccccccccccccccccc");
+            return (PrivateKey) keyStore.getKey(getKeyAliasFromSerial(certificateSerial), SECRET.toCharArray());
+        } catch (NoSuchAlgorithmException | KeyStoreException | UnrecoverableKeyException e) {
             throw new RuntimeException(e);
         }
     }
