@@ -17,10 +17,12 @@ import team11.backend.InformationSecurityProject.dto.TokenStateOut;
 import team11.backend.InformationSecurityProject.dto.UserIn;
 import team11.backend.InformationSecurityProject.dto.UserOut;
 import team11.backend.InformationSecurityProject.exceptions.BadRequestException;
+import team11.backend.InformationSecurityProject.model.Admin;
 import team11.backend.InformationSecurityProject.model.StandardUser;
 import team11.backend.InformationSecurityProject.model.User;
 import team11.backend.InformationSecurityProject.security.RefreshTokenService;
 import team11.backend.InformationSecurityProject.security.TokenUtils;
+import team11.backend.InformationSecurityProject.service.interfaces.AdminService;
 import team11.backend.InformationSecurityProject.service.interfaces.StandardUserService;
 
 @RestController
@@ -32,14 +34,16 @@ public class UserController {
     private final AuthenticationManager authenticationManager;
     private final TokenUtils tokenUtils;
     private final RefreshTokenService refreshTokenService;
+    private final AdminService adminService;
 
     @Autowired
-    public UserController(StandardUserService standardUserService, AuthenticationManager authenticationManager, TokenUtils tokenUtils, RefreshTokenService refreshTokenService){
+    public UserController(StandardUserService standardUserService, AuthenticationManager authenticationManager, TokenUtils tokenUtils, RefreshTokenService refreshTokenService, AdminService adminService){
 
         this.standardUserService = standardUserService;
         this.authenticationManager = authenticationManager;
         this.tokenUtils = tokenUtils;
         this.refreshTokenService = refreshTokenService;
+        this.adminService = adminService;
     }
     @PostMapping(
             value = "/register",
@@ -50,7 +54,15 @@ public class UserController {
         UserOut userOut = new UserOut(user);
         return new ResponseEntity<>(userOut, HttpStatus.OK);
     }
-
+    @PostMapping(
+            value = "/register/admin",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<UserOut> registerAdmin(@RequestBody @Valid UserIn userDTO){
+        Admin user = adminService.register(userDTO);
+        UserOut userOut = new UserOut(user);
+        return new ResponseEntity<>(userOut, HttpStatus.OK);
+    }
     @PostMapping(
             value = "/login",
             produces = MediaType.APPLICATION_JSON_VALUE

@@ -24,7 +24,7 @@ public class CertificateRequestOut {
         this.parentCertificateSerialNumber = certificateRequest.getParent() == null ? null : certificateRequest.getParent().getSerialNumber();
         this.creationTime = certificateRequest.getCreationTime().toString();
         this.isAccepted = certificateRequest.getIsAccepted();
-        this.acceptanceTime = certificateRequest.getAcceptanceTime().toString();
+        this.acceptanceTime = certificateRequest.getAcceptanceTime() == null ? null : certificateRequest.getAcceptanceTime().toString();
         this.ownerId = certificateRequest.getOwner().getId();
         this.linkedCertificateSerialNumber = certificateRequest.getLinkedCertificate() == null ? null : certificateRequest.getLinkedCertificate().getSerialNumber();
         this.certificateType = certificateRequest.getCertificateType().toString();
