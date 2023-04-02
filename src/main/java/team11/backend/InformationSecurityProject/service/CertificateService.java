@@ -23,7 +23,6 @@ import java.security.*;
 import java.security.cert.X509Certificate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 @Service
 public class CertificateService implements ICertificateService {
@@ -36,34 +35,6 @@ public class CertificateService implements ICertificateService {
         this.certificateRepository = certificateRepository;
         this.keyStoreRepository = keyStoreRepository;
         this.certificateUtility = certificateUtility;
-    }
-
-    /**
-     * Creates a self-signed X.509 certificate with the given key pair, subject name and validity period.
-     *
-     * @param keyPair the key pair to use for the certificate
-     * @param subject the subject name for the certificate
-     * @param days the number of days the certificate is valid for
-     * @return a self-signed X.509 certificate
-     * @throws Exception if an error occurs while creating the certificate
-     */
-    public X509Certificate createSelfSignedCertificate(KeyPair keyPair, X500Name subject, int days) throws Exception {
-        // Generate a serial number based on timestamp
-        BigInteger serialNumber = BigInteger.valueOf(System.currentTimeMillis());
-
-        X509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(subject, serialNumber, new Date(), new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(days)), subject, keyPair.getPublic());
-
-        // Add the basic constraints extension to make it a CA certificate
-        certBuilder.addExtension(Extension.basicConstraints, true, new BasicConstraints(true));
-
-        // Add the subject key identifier extension
-        JcaX509ExtensionUtils extUtils = new JcaX509ExtensionUtils();
-        certBuilder.addExtension(Extension.subjectKeyIdentifier, false, extUtils.createSubjectKeyIdentifier(keyPair.getPublic()));
-
-        // Sign the certificate
-        ContentSigner signer = new JcaContentSignerBuilder("SHA256WithRSAEncryption").build(keyPair.getPrivate());
-        X509CertificateHolder certHolder = certBuilder.build(signer);
-        return new JcaX509CertificateConverter().getCertificate(certHolder);
     }
 
     /**

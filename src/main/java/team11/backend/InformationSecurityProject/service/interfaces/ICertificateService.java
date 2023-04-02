@@ -15,8 +15,6 @@ import java.util.Set;
 
 public interface ICertificateService {
 
-    X509Certificate createSelfSignedCertificate(KeyPair keyPair, X500Name subject, int days) throws Exception;
-
     X509Certificate createCertificate(BigInteger parentCertificateSerial, X500Name subject, int days) throws Exception;
 
     boolean validateCertificate(X509Certificate certificate, X509Certificate expectedSigner) throws Exception;
