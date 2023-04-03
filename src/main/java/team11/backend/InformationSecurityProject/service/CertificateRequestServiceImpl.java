@@ -12,7 +12,6 @@ import team11.backend.InformationSecurityProject.dto.CertificateRequestIn;
 import team11.backend.InformationSecurityProject.exceptions.BadRequestException;
 import team11.backend.InformationSecurityProject.model.*;
 import team11.backend.InformationSecurityProject.repository.CertificateRequestRepository;
-import team11.backend.InformationSecurityProject.repository.RejectionRepository;
 import team11.backend.InformationSecurityProject.service.interfaces.CertificatePreviewService;
 import team11.backend.InformationSecurityProject.service.interfaces.CertificateRequestService;
 import team11.backend.InformationSecurityProject.service.interfaces.ICertificateService;
@@ -30,15 +29,13 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
     private final CertificatePreviewService certificatePreviewService;
     private final ICertificateService certificateService;
 
-    private final RejectionRepository rejectionRepository;
 
     @Autowired
-    public CertificateRequestServiceImpl(CertificateRequestRepository certificateRequestRepository, CertificatePreviewService certificatePreviewService, ICertificateService certificateService, RejectionRepository rejectionRepository){
+    public CertificateRequestServiceImpl(CertificateRequestRepository certificateRequestRepository, CertificatePreviewService certificatePreviewService, ICertificateService certificateService){
 
         this.certificateRequestRepository = certificateRequestRepository;
         this.certificatePreviewService = certificatePreviewService;
         this.certificateService = certificateService;
-        this.rejectionRepository = rejectionRepository;
     }
 
     private X500Name generateX500Name(String name, String surname, String email, String userID, @Nullable String organization,@Nullable String orgUnit){
@@ -84,7 +81,7 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
         certificateRequest.setParent(parent);
         certificateRequest.setCertificateType(certificateRequestDTO.getCertificateType());
         certificateRequest.setCreationTime(LocalDateTime.now());
-        certificateRequest.setIsAccepted(false);
+        certificateRequest.setRequestState(RequestState.PENDING);
         certificateRequest.setOrganization(certificateRequestDTO.getOrganization());
         certificateRequest.setOrganizationUnit(certificateRequest.getOrganizationUnit());
         certificateRequest.setOwner(user);
@@ -100,7 +97,7 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
                     certificateRequestDTO.getOrganizationUnit());
             try {
                 X509Certificate certificate = certificateService.createCertificate(caSerial, subject, 30);
-                certificateRequest.setIsAccepted(true);
+                certificateRequest.setRequestState(RequestState.APPROVED);
                 certificateRequest.setAcceptanceTime(LocalDateTime.now());
 
                 Certificate certPreview = new Certificate();
@@ -139,8 +136,8 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
 
         CertificateRequest certificateRequest =  certificateRequestRepository.getReferenceById(id);
         User owner = certificateRequest.getOwner();
-        if(certificateRequest.getIsAccepted()){
-            throw new BadRequestException("This certificate is already approved");
+        if(!certificateRequest.getRequestState().equals(RequestState.PENDING)){
+            throw new BadRequestException("This certificate has already been processed");
         }
         if (certificateRequest.getParent().getUser().getId().equals(user.getId()) || user.getUserType().equals("ADMIN")){
             BigInteger parentSerial = certificateRequest.getParent().getSerialNumber();
@@ -173,7 +170,7 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
             }catch (Exception e){
                 throw new BadRequestException(e.getMessage());
             }
-            certificateRequest.setIsAccepted(true);
+            certificateRequest.setRequestState(RequestState.APPROVED);
             certificateRequest.setAcceptanceTime(LocalDateTime.now());
             certificateRequestRepository.save(certificateRequest);
             return true;
@@ -190,20 +187,14 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
         User user = (User) auth.getPrincipal();
         CertificateRequest certificateRequest =  certificateRequestRepository.getReferenceById(id);
         User owner = certificateRequest.getOwner();
-        if(certificateRequest.getIsAccepted()){
-            throw new BadRequestException("This certificate is already approved");
+        if(!certificateRequest.getRequestState().equals(RequestState.PENDING)){
+            throw new BadRequestException("This certificate has already been processed");
         }
         if (certificateRequest.getParent().getUser().getId().equals(user.getId()) || user.getUserType().equals("ADMIN")){
-            certificateRequestRepository.delete(certificateRequest);
-            Rejection rejection = new Rejection();
-            rejection.setRejection_reason(reason);
-            rejection.setRejectionTime(LocalDateTime.now());
-            rejection.setOrganization(certificateRequest.getOrganization());
-            rejection.setCertificateType(certificateRequest.getCertificateType());
-            rejection.setOwner(certificateRequest.getOwner());
-            rejection.setCreationTime(certificateRequest.getCreationTime());
-            rejection.setParent(certificateRequest.getParent());
-            rejectionRepository.save(rejection);
+            certificateRequest.setRequestState(RequestState.REJECTED);
+            certificateRequest.setRejection_reason(reason);
+            certificateRequest.setAcceptanceTime(LocalDateTime.now());
+            certificateRequestRepository.save(certificateRequest);
             return true;
 
         }else{
