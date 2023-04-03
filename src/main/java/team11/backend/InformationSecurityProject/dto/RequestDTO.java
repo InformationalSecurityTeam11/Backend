@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import team11.backend.InformationSecurityProject.model.CertificateRequest;
 import team11.backend.InformationSecurityProject.model.CertificateType;
-import team11.backend.InformationSecurityProject.model.User;
 
 import java.time.LocalDateTime;
 
@@ -15,7 +14,7 @@ public class RequestDTO {
     private Integer id;
     private CertificateInfoDTO certificateParent;
     private LocalDateTime creationTime;
-    private Boolean isAccepted;
+    private String requestState;
     private LocalDateTime acceptanceTime;
     private UserInfoDTO owner;
     private CertificateType certificateType;
@@ -26,7 +25,7 @@ public class RequestDTO {
         this.id = request.getId();
         this.certificateParent = new CertificateInfoDTO(request.getParent());
         this.creationTime = request.getCreationTime();
-        this.isAccepted = request.getIsAccepted();
+        this.requestState = request.getRequestState().toString();
         this.owner = new UserInfoDTO(request.getOwner());
         this.certificateType = request.getCertificateType();
         this.organization = request.getOrganization();
