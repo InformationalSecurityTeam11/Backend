@@ -8,4 +8,7 @@ public interface CertificateRequestService {
     CertificateRequest createRequest(CertificateRequestIn certificateRequestDTO);
 
     CertificateRequest update(CertificateRequest request);
+
+    Boolean approve(int id);
+    Boolean reject(int id);
 }

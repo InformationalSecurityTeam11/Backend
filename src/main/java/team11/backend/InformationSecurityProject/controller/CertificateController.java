@@ -1,5 +1,6 @@
 package team11.backend.InformationSecurityProject.controller;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -69,6 +70,44 @@ public class CertificateController {
             throw new BadRequestException("Invalid serial number");
         }
         return new ResponseEntity<>(new ValidCertificateDTO(certificate), HttpStatus.OK);
+    }
+
+    @PostMapping(
+            value = "/approve",
+            consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("hasAnyRole('STANDARD', 'ADMIN')")
+    public ResponseEntity approveCertificate(@RequestBody @Valid ValidateCertificateDTO validation){
+        int id = validation.getSerialNumber().intValueExact();
+        try{
+            Boolean response = certificateRequestService.approve(id);
+        }catch (EntityNotFoundException e){
+            throw new EntityNotFoundException("There is no specified request");
+        }
+        catch (Exception e){
+            throw new BadRequestException(e.getMessage());
+        }
+        return new ResponseEntity(HttpStatus.OK);
+
+    }
+
+    @PostMapping(
+            value = "/reject",
+            consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("hasAnyRole('STANDARD', 'ADMIN')")
+    public ResponseEntity rejectCertificate(@RequestBody @Valid ValidateCertificateDTO validation){
+        int id = validation.getSerialNumber().intValueExact();
+        try{
+            Boolean response = certificateRequestService.reject(id);
+        }catch (EntityNotFoundException e){
+            throw new EntityNotFoundException("There is no specified request");
+        }
+        catch (Exception e){
+            throw new BadRequestException(e.getMessage());
+        }
+        return new ResponseEntity(HttpStatus.OK);
+
     }
 
 }

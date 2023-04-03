@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import team11.backend.InformationSecurityProject.dto.CertificateRequestIn;
 import team11.backend.InformationSecurityProject.exceptions.BadRequestException;
 import team11.backend.InformationSecurityProject.model.*;
+import team11.backend.InformationSecurityProject.repository.CertificateRepository;
 import team11.backend.InformationSecurityProject.repository.CertificateRequestRepository;
 import team11.backend.InformationSecurityProject.service.interfaces.CertificatePreviewService;
 import team11.backend.InformationSecurityProject.service.interfaces.CertificateRequestService;
@@ -127,4 +128,78 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
     public CertificateRequest update(CertificateRequest request) {
         return certificateRequestRepository.save(request);
     }
+
+
+    @Override
+    public Boolean approve(int id){
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) auth.getPrincipal();
+
+        CertificateRequest certificateRequest =  certificateRequestRepository.getReferenceById(id);
+        User owner = certificateRequest.getOwner();
+        if(certificateRequest.getIsAccepted()){
+            throw new BadRequestException("This certificate is already approved");
+        }
+        if (certificateRequest.getParent().getUser().getId().equals(user.getId()) || user.getUserType().equals("ADMIN")){
+            BigInteger parentSerial = certificateRequest.getParent().getSerialNumber();
+            X500Name subject = generateX500Name(owner.getName(),
+                    owner.getSurname(),
+                    owner.getEmail(),
+                    owner.getId().toString(),
+                    certificateRequest.getOrganization(),
+                    certificateRequest.getOrganizationUnit());
+            try {
+                X509Certificate certificate = certificateService.createCertificate(parentSerial, subject, 30);
+
+                Certificate certPreview = new Certificate();
+                certPreview.setType(certificateRequest.getCertificateType());
+                certPreview.setUser(certificateRequest.getOwner());
+                certPreview.setStartDate(
+                        certificate.getNotBefore()
+                                .toInstant().atZone(ZoneId.systemDefault())
+                                .toLocalDateTime()
+                );
+                certPreview.setExpireDate(
+                        certificate.getNotAfter()
+                                .toInstant().atZone(ZoneId.systemDefault())
+                                .toLocalDateTime()
+                );
+                certPreview.setSerialNumber(certificate.getSerialNumber());
+
+                certificateRequest.setLinkedCertificate(certificatePreviewService.insert(certPreview));
+
+            }catch (Exception e){
+                throw new BadRequestException(e.getMessage());
+            }
+            certificateRequest.setIsAccepted(true);
+            certificateRequest.setAcceptanceTime(LocalDateTime.now());
+            certificateRequestRepository.save(certificateRequest);
+            return true;
+
+        }else{
+            throw new BadRequestException("You can not approve requests of other users");
+        }
+
+    }
+
+    @Override
+    public Boolean reject(int id){
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) auth.getPrincipal();
+        CertificateRequest certificateRequest =  certificateRequestRepository.getReferenceById(id);
+        User owner = certificateRequest.getOwner();
+        if(certificateRequest.getIsAccepted()){
+            throw new BadRequestException("This certificate is already approved");
+        }
+        if (certificateRequest.getParent().getUser().getId().equals(user.getId()) || user.getUserType().equals("ADMIN")){
+            certificateRequestRepository.delete(certificateRequest);
+            return true;
+
+        }else{
+            throw new BadRequestException("You can not approve requests of other users");
+        }
+    }
+
+
+
 }
