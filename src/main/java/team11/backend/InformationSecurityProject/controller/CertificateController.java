@@ -1,25 +1,22 @@
 package team11.backend.InformationSecurityProject.controller;
 
 import jakarta.validation.Valid;
-import org.bouncycastle.asn1.x500.X500Name;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import team11.backend.InformationSecurityProject.dto.CertificateInfoDTO;
-import team11.backend.InformationSecurityProject.dto.CertificateRequestIn;
-import team11.backend.InformationSecurityProject.dto.CertificateRequestOut;
-import team11.backend.InformationSecurityProject.dto.SubjectInfoDTO;
+import team11.backend.InformationSecurityProject.dto.*;
+import team11.backend.InformationSecurityProject.exceptions.BadRequestException;
+import team11.backend.InformationSecurityProject.exceptions.NotFoundException;
 import team11.backend.InformationSecurityProject.model.Certificate;
 import team11.backend.InformationSecurityProject.model.CertificateRequest;
+import team11.backend.InformationSecurityProject.service.interfaces.CertificatePreviewService;
 import team11.backend.InformationSecurityProject.service.interfaces.CertificateRequestService;
 import team11.backend.InformationSecurityProject.service.interfaces.ICertificateService;
 import team11.backend.InformationSecurityProject.utils.CertificateUtility;
 
-import java.security.KeyPair;
-import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Set;
 @RestController
@@ -29,12 +26,14 @@ public class CertificateController {
     private final ICertificateService certificateService;
     private final CertificateRequestService certificateRequestService;
     private final CertificateUtility certificateUtility;
+    private final CertificatePreviewService certificatePreviewService;
 
     @Autowired
-    public CertificateController(ICertificateService certificateService, CertificateRequestService certificateRequestService, CertificateUtility certificateUtility) {
+    public CertificateController(ICertificateService certificateService, CertificateRequestService certificateRequestService, CertificateUtility certificateUtility, CertificatePreviewService certificatePreviewService) {
         this.certificateService = certificateService;
         this.certificateRequestService = certificateRequestService;
         this.certificateUtility = certificateUtility;
+        this.certificatePreviewService = certificatePreviewService;
     }
 
     @PostMapping(
@@ -54,6 +53,22 @@ public class CertificateController {
         return new ResponseEntity<>(this.certificateService.getCertificatesDTOS(certificates), HttpStatus.OK);
     }
 
-
+    @PostMapping(
+            value = "/validate",
+            consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("hasAnyRole('STANDARD', 'ADMIN')")
+    public ResponseEntity<ValidCertificateDTO> validateCertificate(@RequestBody @Valid ValidateCertificateDTO validateCertificateDTO){
+        Certificate certificate = null;
+        try{
+            certificate = this.certificatePreviewService.validateCertificate(validateCertificateDTO.getSerialNumber());
+            if(certificate == null){
+                return new ResponseEntity<>(new ValidCertificateDTO(false), HttpStatus.OK);
+            }
+        }catch (NotFoundException e){
+            throw new BadRequestException("Invalid serial number");
+        }
+        return new ResponseEntity<>(new ValidCertificateDTO(certificate), HttpStatus.OK);
+    }
 
 }

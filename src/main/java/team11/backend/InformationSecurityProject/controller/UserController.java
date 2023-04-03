@@ -30,7 +30,6 @@ import team11.backend.InformationSecurityProject.service.interfaces.StandardUser
 public class UserController {
 
     private final StandardUserService standardUserService;
-
     private final AuthenticationManager authenticationManager;
     private final TokenUtils tokenUtils;
     private final RefreshTokenService refreshTokenService;

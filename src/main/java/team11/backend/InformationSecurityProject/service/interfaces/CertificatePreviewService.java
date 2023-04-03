@@ -10,4 +10,6 @@ public interface CertificatePreviewService {
     Certificate get(Integer id);
 
     Certificate getBySerial(BigInteger serialNumber);
+
+    public Certificate validateCertificate(BigInteger serialNumber);
 }
