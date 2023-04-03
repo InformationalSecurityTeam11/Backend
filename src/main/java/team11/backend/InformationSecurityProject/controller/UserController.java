@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -12,18 +13,20 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import team11.backend.InformationSecurityProject.dto.LoginCredentials;
-import team11.backend.InformationSecurityProject.dto.TokenStateOut;
-import team11.backend.InformationSecurityProject.dto.UserIn;
-import team11.backend.InformationSecurityProject.dto.UserOut;
+import team11.backend.InformationSecurityProject.dto.*;
 import team11.backend.InformationSecurityProject.exceptions.BadRequestException;
 import team11.backend.InformationSecurityProject.model.Admin;
+import team11.backend.InformationSecurityProject.model.CertificateRequest;
 import team11.backend.InformationSecurityProject.model.StandardUser;
 import team11.backend.InformationSecurityProject.model.User;
 import team11.backend.InformationSecurityProject.security.RefreshTokenService;
 import team11.backend.InformationSecurityProject.security.TokenUtils;
 import team11.backend.InformationSecurityProject.service.interfaces.AdminService;
+import team11.backend.InformationSecurityProject.service.interfaces.CertificateRequestService;
 import team11.backend.InformationSecurityProject.service.interfaces.StandardUserService;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/user")
@@ -35,15 +38,18 @@ public class UserController {
     private final TokenUtils tokenUtils;
     private final RefreshTokenService refreshTokenService;
     private final AdminService adminService;
+    private final CertificateRequestService certificateRequestService;
 
     @Autowired
-    public UserController(StandardUserService standardUserService, AuthenticationManager authenticationManager, TokenUtils tokenUtils, RefreshTokenService refreshTokenService, AdminService adminService){
+    public UserController(StandardUserService standardUserService, AuthenticationManager authenticationManager, TokenUtils tokenUtils,
+                          RefreshTokenService refreshTokenService, AdminService adminService, CertificateRequestService certificateRequestService){
 
         this.standardUserService = standardUserService;
         this.authenticationManager = authenticationManager;
         this.tokenUtils = tokenUtils;
         this.refreshTokenService = refreshTokenService;
         this.adminService = adminService;
+        this.certificateRequestService = certificateRequestService;
     }
     @PostMapping(
             value = "/register",
@@ -96,4 +102,15 @@ public class UserController {
         throw new BadRequestException("User is not authenticated");
     }
 
+    @GetMapping(value = "/requests", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('STANDARD', 'ADMIN')")
+    public ResponseEntity<List<RequestDTO>> getAllRequests() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) auth.getPrincipal();
+        List<RequestDTO> requestDTOS = new ArrayList<>();
+        for (CertificateRequest request : this.certificateRequestService.getCertificateRequestByOwner(user)) {
+            requestDTOS.add(new RequestDTO(request));
+        }
+        return new ResponseEntity<>(requestDTOS, HttpStatus.OK);
+    }
 }
