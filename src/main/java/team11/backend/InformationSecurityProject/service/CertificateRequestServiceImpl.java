@@ -21,6 +21,7 @@ import java.math.BigInteger;
 import java.security.cert.X509Certificate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -126,5 +127,10 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
     @Override
     public CertificateRequest update(CertificateRequest request) {
         return certificateRequestRepository.save(request);
+    }
+
+    @Override
+    public List<CertificateRequest> getCertificateRequestByOwner(User owner) {
+        return this.certificateRequestRepository.getCertificateRequestByOwner(owner);
     }
 }
