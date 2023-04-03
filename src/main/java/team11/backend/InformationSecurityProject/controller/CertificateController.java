@@ -96,10 +96,9 @@ public class CertificateController {
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
     @PreAuthorize("hasAnyRole('STANDARD', 'ADMIN')")
-    public ResponseEntity rejectCertificate(@RequestBody @Valid ValidateCertificateDTO validation){
-        int id = validation.getSerialNumber().intValueExact();
+    public ResponseEntity rejectCertificate(@RequestBody @Valid RejectionDTO rejection){
         try{
-            Boolean response = certificateRequestService.reject(id);
+            Boolean response = certificateRequestService.reject(rejection.getId(), rejection.getReason());
         }catch (EntityNotFoundException e){
             throw new EntityNotFoundException("There is no specified request");
         }

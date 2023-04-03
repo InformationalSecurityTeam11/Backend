@@ -3,7 +3,6 @@ package team11.backend.InformationSecurityProject.service;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
-import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
@@ -12,8 +11,8 @@ import org.springframework.stereotype.Service;
 import team11.backend.InformationSecurityProject.dto.CertificateRequestIn;
 import team11.backend.InformationSecurityProject.exceptions.BadRequestException;
 import team11.backend.InformationSecurityProject.model.*;
-import team11.backend.InformationSecurityProject.repository.CertificateRepository;
 import team11.backend.InformationSecurityProject.repository.CertificateRequestRepository;
+import team11.backend.InformationSecurityProject.repository.RejectionRepository;
 import team11.backend.InformationSecurityProject.service.interfaces.CertificatePreviewService;
 import team11.backend.InformationSecurityProject.service.interfaces.CertificateRequestService;
 import team11.backend.InformationSecurityProject.service.interfaces.ICertificateService;
@@ -31,12 +30,15 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
     private final CertificatePreviewService certificatePreviewService;
     private final ICertificateService certificateService;
 
+    private final RejectionRepository rejectionRepository;
+
     @Autowired
-    public CertificateRequestServiceImpl(CertificateRequestRepository certificateRequestRepository, CertificatePreviewService certificatePreviewService, ICertificateService certificateService){
+    public CertificateRequestServiceImpl(CertificateRequestRepository certificateRequestRepository, CertificatePreviewService certificatePreviewService, ICertificateService certificateService, RejectionRepository rejectionRepository){
 
         this.certificateRequestRepository = certificateRequestRepository;
         this.certificatePreviewService = certificatePreviewService;
         this.certificateService = certificateService;
+        this.rejectionRepository = rejectionRepository;
     }
 
     private X500Name generateX500Name(String name, String surname, String email, String userID, @Nullable String organization,@Nullable String orgUnit){
@@ -183,7 +185,7 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
     }
 
     @Override
-    public Boolean reject(int id){
+    public Boolean reject(int id, String reason){
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User user = (User) auth.getPrincipal();
         CertificateRequest certificateRequest =  certificateRequestRepository.getReferenceById(id);
@@ -193,6 +195,15 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
         }
         if (certificateRequest.getParent().getUser().getId().equals(user.getId()) || user.getUserType().equals("ADMIN")){
             certificateRequestRepository.delete(certificateRequest);
+            Rejection rejection = new Rejection();
+            rejection.setRejection_reason(reason);
+            rejection.setRejectionTime(LocalDateTime.now());
+            rejection.setOrganization(certificateRequest.getOrganization());
+            rejection.setCertificateType(certificateRequest.getCertificateType());
+            rejection.setOwner(certificateRequest.getOwner());
+            rejection.setCreationTime(certificateRequest.getCreationTime());
+            rejection.setParent(certificateRequest.getParent());
+            rejectionRepository.save(rejection);
             return true;
 
         }else{

@@ -10,5 +10,5 @@ public interface CertificateRequestService {
     CertificateRequest update(CertificateRequest request);
 
     Boolean approve(int id);
-    Boolean reject(int id);
+    Boolean reject(int id, String reason);
 }
