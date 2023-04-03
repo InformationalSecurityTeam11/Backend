@@ -22,8 +22,8 @@ public class CertificateRequest {
     @Column(name = "creation_date", nullable = false)
     private LocalDateTime creationTime;
 
-    @Column(name = "is_accepted", nullable = false)
-    private Boolean isAccepted;
+    @Column(name = "rejection_reason")
+    private String rejection_reason;
 
     @Column(name = "time_of_acceptance")
     private LocalDateTime acceptanceTime;
@@ -46,10 +46,8 @@ public class CertificateRequest {
     @Column(name = "organization_unit")
     private String organizationUnit;
 
-    public void setIsAccepted(Boolean isAccepted){
-        if(isAccepted){
-            this.acceptanceTime = LocalDateTime.now();
-        }
-        this.isAccepted = isAccepted;
-    }
+    @Enumerated(EnumType.STRING)
+    @Column(name = "request_state", nullable = false)
+    private RequestState requestState;
+
 }

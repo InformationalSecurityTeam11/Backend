@@ -8,6 +8,8 @@ import team11.backend.InformationSecurityProject.repository.CertificateRepositor
 import team11.backend.InformationSecurityProject.service.interfaces.CertificatePreviewService;
 
 import java.math.BigInteger;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -38,5 +40,20 @@ public class CertificatePreviewServiceImpl implements CertificatePreviewService 
             throw new NotFoundException("Certificate with given serial number does not exist");
         }
         return certificateOpt.get();
+    }
+
+    @Override
+    public Certificate validateCertificate(BigInteger serialNumber) {
+        Certificate certificate = getBySerial(serialNumber);
+        LocalDate currentDate = LocalDateTime.now().toLocalDate();
+        LocalDate startDate = certificate.getStartDate().toLocalDate();
+        LocalDate expireDate = certificate.getExpireDate().toLocalDate();
+        Boolean valid = false;
+        if ((startDate.isBefore(currentDate) || startDate.isEqual(currentDate)) &&
+                (expireDate.isAfter(currentDate) || expireDate.isEqual(currentDate))) {
+            return certificate;
+        } else{
+            return null;
+        }
     }
 }

@@ -3,7 +3,6 @@ package team11.backend.InformationSecurityProject.service;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
-import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
@@ -30,6 +29,7 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
     private final CertificateRequestRepository certificateRequestRepository;
     private final CertificatePreviewService certificatePreviewService;
     private final ICertificateService certificateService;
+
 
     @Autowired
     public CertificateRequestServiceImpl(CertificateRequestRepository certificateRequestRepository, CertificatePreviewService certificatePreviewService, ICertificateService certificateService){
@@ -82,7 +82,7 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
         certificateRequest.setParent(parent);
         certificateRequest.setCertificateType(certificateRequestDTO.getCertificateType());
         certificateRequest.setCreationTime(LocalDateTime.now());
-        certificateRequest.setIsAccepted(false);
+        certificateRequest.setRequestState(RequestState.PENDING);
         certificateRequest.setOrganization(certificateRequestDTO.getOrganization());
         certificateRequest.setOrganizationUnit(certificateRequest.getOrganizationUnit());
         certificateRequest.setOwner(user);
@@ -98,7 +98,7 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
                     certificateRequestDTO.getOrganizationUnit());
             try {
                 X509Certificate certificate = certificateService.createCertificate(caSerial, subject, 30);
-                certificateRequest.setIsAccepted(true);
+                certificateRequest.setRequestState(RequestState.APPROVED);
                 certificateRequest.setAcceptanceTime(LocalDateTime.now());
 
                 Certificate certPreview = new Certificate();
@@ -129,8 +129,84 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
         return certificateRequestRepository.save(request);
     }
 
+
+    @Override
+    public Boolean approve(int id){
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) auth.getPrincipal();
+
+        CertificateRequest certificateRequest =  certificateRequestRepository.getReferenceById(id);
+        User owner = certificateRequest.getOwner();
+        if(!certificateRequest.getRequestState().equals(RequestState.PENDING)){
+            throw new BadRequestException("This certificate has already been processed");
+        }
+        if (certificateRequest.getParent().getUser().getId().equals(user.getId()) || user.getUserType().equals("ADMIN")){
+            BigInteger parentSerial = certificateRequest.getParent().getSerialNumber();
+            X500Name subject = generateX500Name(owner.getName(),
+                    owner.getSurname(),
+                    owner.getEmail(),
+                    owner.getId().toString(),
+                    certificateRequest.getOrganization(),
+                    certificateRequest.getOrganizationUnit());
+            try {
+                X509Certificate certificate = certificateService.createCertificate(parentSerial, subject, 30);
+
+                Certificate certPreview = new Certificate();
+                certPreview.setType(certificateRequest.getCertificateType());
+                certPreview.setUser(certificateRequest.getOwner());
+                certPreview.setStartDate(
+                        certificate.getNotBefore()
+                                .toInstant().atZone(ZoneId.systemDefault())
+                                .toLocalDateTime()
+                );
+                certPreview.setExpireDate(
+                        certificate.getNotAfter()
+                                .toInstant().atZone(ZoneId.systemDefault())
+                                .toLocalDateTime()
+                );
+                certPreview.setSerialNumber(certificate.getSerialNumber());
+
+                certificateRequest.setLinkedCertificate(certificatePreviewService.insert(certPreview));
+
+            }catch (Exception e){
+                throw new BadRequestException(e.getMessage());
+            }
+            certificateRequest.setRequestState(RequestState.APPROVED);
+            certificateRequest.setAcceptanceTime(LocalDateTime.now());
+            certificateRequestRepository.save(certificateRequest);
+            return true;
+
+        }else{
+            throw new BadRequestException("You can not approve requests of other users");
+        }
+
+    }
+
+    @Override
+    public Boolean reject(int id, String reason){
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) auth.getPrincipal();
+        CertificateRequest certificateRequest =  certificateRequestRepository.getReferenceById(id);
+        User owner = certificateRequest.getOwner();
+        if(!certificateRequest.getRequestState().equals(RequestState.PENDING)){
+            throw new BadRequestException("This certificate has already been processed");
+        }
+        if (certificateRequest.getParent().getUser().getId().equals(user.getId()) || user.getUserType().equals("ADMIN")){
+            certificateRequest.setRequestState(RequestState.REJECTED);
+            certificateRequest.setRejection_reason(reason);
+            certificateRequest.setAcceptanceTime(LocalDateTime.now());
+            certificateRequestRepository.save(certificateRequest);
+            return true;
+
+        }else{
+            throw new BadRequestException("You can not approve requests of other users");
+        }
+    }
+
+
     @Override
     public List<CertificateRequest> getCertificateRequestByOwner(User owner) {
         return this.certificateRequestRepository.getCertificateRequestByOwner(owner);
     }
+
 }
