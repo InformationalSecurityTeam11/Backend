@@ -129,7 +129,10 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
         return certificateRequestRepository.save(request);
     }
 
-
+    @Override
+    public List<CertificateRequest> getAll(){
+        return certificateRequestRepository.findAll();
+    }
     @Override
     public Boolean approve(int id){
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

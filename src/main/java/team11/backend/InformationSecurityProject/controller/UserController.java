@@ -107,9 +107,16 @@ public class UserController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User user = (User) auth.getPrincipal();
         List<RequestDTO> requestDTOS = new ArrayList<>();
-        for (CertificateRequest request : this.certificateRequestService.getCertificateRequestByOwner(user)) {
-            requestDTOS.add(new RequestDTO(request));
+        if(user.getUserType().equals("ADMIN")){
+            for (CertificateRequest request : this.certificateRequestService.getAll()) {
+                requestDTOS.add(new RequestDTO(request));
+            }
+        }else{
+            for (CertificateRequest request : this.certificateRequestService.getCertificateRequestByOwner(user)) {
+                requestDTOS.add(new RequestDTO(request));
+            }
         }
+
         return new ResponseEntity<>(requestDTOS, HttpStatus.OK);
     }
 }

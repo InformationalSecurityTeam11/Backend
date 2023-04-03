@@ -12,6 +12,8 @@ public interface CertificateRequestService {
     CertificateRequest update(CertificateRequest request);
 
 
+    List<CertificateRequest> getAll();
+
     Boolean approve(int id);
     Boolean reject(int id, String reason);
     List<CertificateRequest> getCertificateRequestByOwner(User owner);
