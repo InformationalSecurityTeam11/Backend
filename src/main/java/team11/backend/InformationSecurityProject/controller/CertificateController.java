@@ -77,8 +77,8 @@ public class CertificateController {
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
     @PreAuthorize("hasAnyRole('STANDARD', 'ADMIN')")
-    public ResponseEntity approveCertificate(@RequestBody @Valid ValidateCertificateDTO validation){
-        int id = validation.getSerialNumber().intValueExact();
+    public ResponseEntity approveCertificate(@RequestBody @Valid ApproveDTO approval){
+        int id = approval.getId();
         try{
             Boolean response = certificateRequestService.approve(id);
         }catch (EntityNotFoundException e){
