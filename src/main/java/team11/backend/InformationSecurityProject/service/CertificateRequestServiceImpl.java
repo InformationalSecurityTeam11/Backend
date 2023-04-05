@@ -10,6 +10,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import team11.backend.InformationSecurityProject.dto.CertificateRequestIn;
 import team11.backend.InformationSecurityProject.exceptions.BadRequestException;
+import team11.backend.InformationSecurityProject.exceptions.ForbiddenException;
+import team11.backend.InformationSecurityProject.exceptions.NotFoundException;
 import team11.backend.InformationSecurityProject.model.*;
 import team11.backend.InformationSecurityProject.repository.CertificateRequestRepository;
 import team11.backend.InformationSecurityProject.service.interfaces.CertificatePreviewService;
@@ -22,6 +24,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class CertificateRequestServiceImpl implements CertificateRequestService {
@@ -61,7 +64,7 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
         User user = (User) auth.getPrincipal();
 
         if(user.getUserType().equals("STANDARD") && certificateRequestDTO.getCertificateType() == CertificateType.ROOT){
-            throw new BadRequestException("Standard user cannot request root certificate");
+            throw new ForbiddenException("Standard user cannot request root certificate");
         }
         BigInteger caSerial;
         Certificate parent;
@@ -73,7 +76,7 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
             if(parent.getType() == CertificateType.ROOT || parent.getType() == CertificateType.INTERMEDIATE){
                 caSerial = certificateRequestDTO.getParentCertificateSerialNumber();
             }else {
-                throw new BadRequestException("Given certificate cannot issue new certificates");
+                throw new ForbiddenException("Given certificate cannot issue new certificates");
             }
         }
 
@@ -84,10 +87,8 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
         certificateRequest.setCreationTime(LocalDateTime.now());
         certificateRequest.setRequestState(RequestState.PENDING);
         certificateRequest.setOrganization(certificateRequestDTO.getOrganization());
-        certificateRequest.setOrganizationUnit(certificateRequest.getOrganizationUnit());
+        certificateRequest.setOrganizationUnit(certificateRequestDTO.getOrganizationUnit());
         certificateRequest.setOwner(user);
-
-
 
         if(user.getUserType().equals("ADMIN") || Objects.equals(user.getId(), Objects.requireNonNull(parent).getUser().getId()) ){
             X500Name subject = generateX500Name(user.getName(),
@@ -134,15 +135,21 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
         return certificateRequestRepository.findAll();
     }
     @Override
-    public Boolean approve(int id){
+    public void approve(int id){
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User user = (User) auth.getPrincipal();
 
-        CertificateRequest certificateRequest =  certificateRequestRepository.getReferenceById(id);
+        Optional<CertificateRequest> certificateRequestOpt =  certificateRequestRepository.findById(id);
+        if(certificateRequestOpt.isEmpty()){
+            throw new NotFoundException("Request with given id not found");
+        }
+        CertificateRequest certificateRequest = certificateRequestOpt.get();
+
         User owner = certificateRequest.getOwner();
         if(!certificateRequest.getRequestState().equals(RequestState.PENDING)){
             throw new BadRequestException("This certificate has already been processed");
         }
+
         if (certificateRequest.getParent().getUser().getId().equals(user.getId()) || user.getUserType().equals("ADMIN")){
             BigInteger parentSerial = certificateRequest.getParent().getSerialNumber();
             X500Name subject = generateX500Name(owner.getName(),
@@ -177,20 +184,25 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
             certificateRequest.setRequestState(RequestState.APPROVED);
             certificateRequest.setAcceptanceTime(LocalDateTime.now());
             certificateRequestRepository.save(certificateRequest);
-            return true;
 
         }else{
-            throw new BadRequestException("You can not approve requests of other users");
+            throw new ForbiddenException("You can not approve requests of other users");
         }
 
     }
 
     @Override
-    public Boolean reject(int id, String reason){
+    public void reject(int id, String reason){
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User user = (User) auth.getPrincipal();
-        CertificateRequest certificateRequest =  certificateRequestRepository.getReferenceById(id);
-        User owner = certificateRequest.getOwner();
+
+        Optional<CertificateRequest> certificateRequestOpt =  certificateRequestRepository.findById(id);
+        if(certificateRequestOpt.isEmpty()){
+            throw new NotFoundException("Request with given id not found");
+        }
+
+        CertificateRequest certificateRequest = certificateRequestOpt.get();
+
         if(!certificateRequest.getRequestState().equals(RequestState.PENDING)){
             throw new BadRequestException("This certificate has already been processed");
         }
@@ -199,10 +211,9 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
             certificateRequest.setRejection_reason(reason);
             certificateRequest.setAcceptanceTime(LocalDateTime.now());
             certificateRequestRepository.save(certificateRequest);
-            return true;
 
         }else{
-            throw new BadRequestException("You can not approve requests of other users");
+            throw new ForbiddenException("You can not reject requests of other users");
         }
     }
 

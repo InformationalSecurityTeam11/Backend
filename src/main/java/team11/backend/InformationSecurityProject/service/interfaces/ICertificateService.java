@@ -2,13 +2,9 @@ package team11.backend.InformationSecurityProject.service.interfaces;
 
 import org.bouncycastle.asn1.x500.X500Name;
 import team11.backend.InformationSecurityProject.dto.CertificateInfoDTO;
-import team11.backend.InformationSecurityProject.dto.CertificatePair;
 import team11.backend.InformationSecurityProject.model.Certificate;
-import team11.backend.InformationSecurityProject.model.CertificateType;
-import team11.backend.InformationSecurityProject.model.User;
 
 import java.math.BigInteger;
-import java.security.KeyPair;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Set;

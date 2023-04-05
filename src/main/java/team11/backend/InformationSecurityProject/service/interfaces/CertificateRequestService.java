@@ -10,11 +10,8 @@ import java.util.List;
 public interface CertificateRequestService {
     CertificateRequest createRequest(CertificateRequestIn certificateRequestDTO);
     CertificateRequest update(CertificateRequest request);
-
-
     List<CertificateRequest> getAll();
-
-    Boolean approve(int id);
-    Boolean reject(int id, String reason);
+    void approve(int id);
+    void reject(int id, String reason);
     List<CertificateRequest> getCertificateRequestByOwner(User owner);
 }

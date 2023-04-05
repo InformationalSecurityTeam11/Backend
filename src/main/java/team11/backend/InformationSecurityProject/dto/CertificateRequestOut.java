@@ -7,6 +7,7 @@ import team11.backend.InformationSecurityProject.model.RequestState;
 
 import java.math.BigInteger;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Data
 @NoArgsConstructor
@@ -23,9 +24,9 @@ public class CertificateRequestOut {
     public CertificateRequestOut(CertificateRequest certificateRequest){
         this.id = certificateRequest.getId();
         this.parentCertificateSerialNumber = certificateRequest.getParent() == null ? null : certificateRequest.getParent().getSerialNumber();
-        this.creationTime = certificateRequest.getCreationTime().toString();
+        this.creationTime = certificateRequest.getCreationTime().format(DateTimeFormatter.ISO_DATE_TIME);
         this.requestState = certificateRequest.getRequestState();
-        this.acceptanceTime = certificateRequest.getAcceptanceTime() == null ? null : certificateRequest.getAcceptanceTime().toString();
+        this.acceptanceTime = certificateRequest.getAcceptanceTime() == null ? null : certificateRequest.getAcceptanceTime().format(DateTimeFormatter.ISO_DATE_TIME);
         this.ownerId = certificateRequest.getOwner().getId();
         this.linkedCertificateSerialNumber = certificateRequest.getLinkedCertificate() == null ? null : certificateRequest.getLinkedCertificate().getSerialNumber();
         this.certificateType = certificateRequest.getCertificateType().toString();

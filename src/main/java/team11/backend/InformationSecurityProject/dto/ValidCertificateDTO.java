@@ -16,18 +16,13 @@ import java.time.LocalDateTime;
 @Setter
 public class ValidCertificateDTO {
 
-    private Boolean valid;
+    private boolean valid;
     private LocalDate startDate;
     private LocalDate expiredDate;
 
-    public ValidCertificateDTO(Certificate certificate){
-        this.valid = true;
+    public ValidCertificateDTO(Certificate certificate, boolean valid){
+        this.valid = valid;
         this.startDate = certificate.getStartDate().toLocalDate();
         this.expiredDate = certificate.getExpireDate().toLocalDate();
-    }
-    public ValidCertificateDTO(Boolean valid){
-        this.valid = valid;
-        this.startDate = null;
-        this.expiredDate = null;
     }
 }

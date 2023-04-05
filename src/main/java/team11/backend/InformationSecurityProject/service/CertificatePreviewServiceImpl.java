@@ -42,18 +42,18 @@ public class CertificatePreviewServiceImpl implements CertificatePreviewService 
         return certificateOpt.get();
     }
 
+
     @Override
-    public Certificate validateCertificate(BigInteger serialNumber) {
+    public CertificateValidationObject validateCertificate(BigInteger serialNumber) {
+
         Certificate certificate = getBySerial(serialNumber);
         LocalDate currentDate = LocalDateTime.now().toLocalDate();
         LocalDate startDate = certificate.getStartDate().toLocalDate();
         LocalDate expireDate = certificate.getExpireDate().toLocalDate();
-        Boolean valid = false;
         if ((startDate.isBefore(currentDate) || startDate.isEqual(currentDate)) &&
                 (expireDate.isAfter(currentDate) || expireDate.isEqual(currentDate))) {
-            return certificate;
-        } else{
-            return null;
+            return new CertificateValidationObject(certificate, true);
         }
+        return new CertificateValidationObject(certificate, false);
     }
 }

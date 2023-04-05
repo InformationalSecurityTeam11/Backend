@@ -13,6 +13,7 @@ import team11.backend.InformationSecurityProject.exceptions.BadRequestException;
 import team11.backend.InformationSecurityProject.exceptions.NotFoundException;
 import team11.backend.InformationSecurityProject.model.Certificate;
 import team11.backend.InformationSecurityProject.model.CertificateRequest;
+import team11.backend.InformationSecurityProject.service.CertificatePreviewServiceImpl;
 import team11.backend.InformationSecurityProject.service.interfaces.CertificatePreviewService;
 import team11.backend.InformationSecurityProject.service.interfaces.CertificateRequestService;
 import team11.backend.InformationSecurityProject.service.interfaces.ICertificateService;
@@ -26,20 +27,19 @@ public class CertificateController {
 
     private final ICertificateService certificateService;
     private final CertificateRequestService certificateRequestService;
-    private final CertificateUtility certificateUtility;
     private final CertificatePreviewService certificatePreviewService;
 
     @Autowired
-    public CertificateController(ICertificateService certificateService, CertificateRequestService certificateRequestService, CertificateUtility certificateUtility, CertificatePreviewService certificatePreviewService) {
+    public CertificateController(ICertificateService certificateService, CertificateRequestService certificateRequestService, CertificatePreviewService certificatePreviewService) {
         this.certificateService = certificateService;
         this.certificateRequestService = certificateRequestService;
-        this.certificateUtility = certificateUtility;
         this.certificatePreviewService = certificatePreviewService;
     }
 
     @PostMapping(
         value = "/request",
-        consumes = MediaType.APPLICATION_JSON_VALUE
+        consumes = MediaType.APPLICATION_JSON_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE
     )
     @PreAuthorize("hasAnyRole('STANDARD', 'ADMIN')")
     public ResponseEntity<CertificateRequestOut> createCertificateRequest(@RequestBody @Valid CertificateRequestIn certificateRequestDTO){
@@ -47,7 +47,9 @@ public class CertificateController {
         return new ResponseEntity<>(new CertificateRequestOut(certificateRequest), HttpStatus.OK);
     }
 
-    @GetMapping
+    @GetMapping(
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
     @PreAuthorize("permitAll()")
     public ResponseEntity<Set<CertificateInfoDTO>> getAllCertificates() {
         List<Certificate> certificates = this.certificateService.getAll();
@@ -60,53 +62,30 @@ public class CertificateController {
     )
     @PreAuthorize("hasAnyRole('STANDARD', 'ADMIN')")
     public ResponseEntity<ValidCertificateDTO> validateCertificate(@RequestBody @Valid ValidateCertificateDTO validateCertificateDTO){
-        Certificate certificate = null;
-        try{
-            certificate = this.certificatePreviewService.validateCertificate(validateCertificateDTO.getSerialNumber());
-            if(certificate == null){
-                return new ResponseEntity<>(new ValidCertificateDTO(false), HttpStatus.OK);
-            }
-        }catch (NotFoundException e){
-            throw new BadRequestException("Invalid serial number");
-        }
-        return new ResponseEntity<>(new ValidCertificateDTO(certificate), HttpStatus.OK);
+        CertificatePreviewService.CertificateValidationObject validationObject = this.certificatePreviewService.validateCertificate(validateCertificateDTO.getSerialNumber());
+        return new ResponseEntity<>(new ValidCertificateDTO(validationObject.certificate, validationObject.isValid), HttpStatus.OK);
     }
 
     @PostMapping(
             value = "/approve",
-            consumes = MediaType.APPLICATION_JSON_VALUE
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.TEXT_PLAIN_VALUE
     )
     @PreAuthorize("hasAnyRole('STANDARD', 'ADMIN')")
-    public ResponseEntity approveCertificate(@RequestBody @Valid ApproveDTO approval){
-        int id = approval.getId();
-        try{
-            Boolean response = certificateRequestService.approve(id);
-        }catch (EntityNotFoundException e){
-            throw new EntityNotFoundException("There is no specified request");
-        }
-        catch (Exception e){
-            throw new BadRequestException(e.getMessage());
-        }
-        return new ResponseEntity(HttpStatus.OK);
-
+    public ResponseEntity<?> approveCertificate(@RequestBody @Valid ApproveDTO approval){
+        certificateRequestService.approve(approval.getId());
+        return new ResponseEntity<>("Certificate request approved", HttpStatus.OK);
     }
 
     @PostMapping(
             value = "/reject",
-            consumes = MediaType.APPLICATION_JSON_VALUE
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.TEXT_PLAIN_VALUE
     )
     @PreAuthorize("hasAnyRole('STANDARD', 'ADMIN')")
-    public ResponseEntity rejectCertificate(@RequestBody @Valid RejectionDTO rejection){
-        try{
-            Boolean response = certificateRequestService.reject(rejection.getId(), rejection.getReason());
-        }catch (EntityNotFoundException e){
-            throw new EntityNotFoundException("There is no specified request");
-        }
-        catch (Exception e){
-            throw new BadRequestException(e.getMessage());
-        }
-        return new ResponseEntity(HttpStatus.OK);
-
+    public ResponseEntity<?> rejectCertificate(@RequestBody @Valid RejectionDTO rejection){
+        certificateRequestService.reject(rejection.getId(), rejection.getReason());
+        return new ResponseEntity<>("Certificate request rejected", HttpStatus.OK);
     }
 
 }

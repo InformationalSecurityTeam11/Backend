@@ -15,10 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import team11.backend.InformationSecurityProject.dto.*;
 import team11.backend.InformationSecurityProject.exceptions.BadRequestException;
-import team11.backend.InformationSecurityProject.model.Admin;
-import team11.backend.InformationSecurityProject.model.CertificateRequest;
-import team11.backend.InformationSecurityProject.model.StandardUser;
-import team11.backend.InformationSecurityProject.model.User;
+import team11.backend.InformationSecurityProject.model.*;
 import team11.backend.InformationSecurityProject.security.RefreshTokenService;
 import team11.backend.InformationSecurityProject.security.TokenUtils;
 import team11.backend.InformationSecurityProject.service.interfaces.AdminService;
@@ -103,20 +100,14 @@ public class UserController {
 
     @GetMapping(value = "/requests", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('STANDARD', 'ADMIN')")
-    public ResponseEntity<List<RequestDTO>> getAllRequests() {
+    public ResponseEntity<List<CertificateRequestOut>> getAllRequests() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User user = (User) auth.getPrincipal();
-        List<RequestDTO> requestDTOS = new ArrayList<>();
-        if(user.getUserType().equals("ADMIN")){
-            for (CertificateRequest request : this.certificateRequestService.getAll()) {
-                requestDTOS.add(new RequestDTO(request));
-            }
-        }else{
-            for (CertificateRequest request : this.certificateRequestService.getCertificateRequestByOwner(user)) {
-                requestDTOS.add(new RequestDTO(request));
-            }
+        List<CertificateRequestOut> requestDTOS = new ArrayList<>();
+        List<CertificateRequest> requests = user.getUserType().equals("ADMIN") ? certificateRequestService.getAll() : certificateRequestService.getCertificateRequestByOwner(user);
+        for (CertificateRequest request : requests) {
+            requestDTOS.add(new CertificateRequestOut(request));
         }
-
         return new ResponseEntity<>(requestDTOS, HttpStatus.OK);
     }
 }
