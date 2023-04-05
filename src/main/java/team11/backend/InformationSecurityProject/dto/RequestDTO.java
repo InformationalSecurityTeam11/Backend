@@ -1,6 +1,7 @@
 package team11.backend.InformationSecurityProject.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 import team11.backend.InformationSecurityProject.model.CertificateRequest;
 import team11.backend.InformationSecurityProject.model.CertificateType;
@@ -9,6 +10,7 @@ import java.time.LocalDateTime;
 
 @NoArgsConstructor
 @AllArgsConstructor
+@Data
 
 public class RequestDTO {
     private Integer id;

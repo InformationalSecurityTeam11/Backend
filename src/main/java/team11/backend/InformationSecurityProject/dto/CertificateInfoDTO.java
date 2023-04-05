@@ -19,8 +19,10 @@ public class CertificateInfoDTO {
     private CertificateType type;
 
     public CertificateInfoDTO(Certificate certificate) {
-        this.startDate = certificate.getStartDate();
-        this.userInfo = new UserInfoDTO(certificate.getUser());
-        this.type = certificate.getType();
+        if(certificate != null){
+            this.startDate = certificate.getStartDate();
+            this.userInfo = new UserInfoDTO(certificate.getUser());
+            this.type = certificate.getType();
+        }
     }
 }
