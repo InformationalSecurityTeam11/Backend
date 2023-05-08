@@ -35,7 +35,8 @@ public abstract class User implements UserDetails {
     private List<String> oldPasswords;
     @Column(name = "password", nullable = false)
     private String password;
-
+    @Column(name = "is_enabled", nullable = false)
+    private boolean isEnabled;
     @Column(name = "last_password_reset_date")
     private Timestamp lastPasswordResetDate;
     @OneToOne(fetch = FetchType.EAGER)
@@ -84,7 +85,7 @@ public abstract class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return this.isEnabled;
     }
 
 }

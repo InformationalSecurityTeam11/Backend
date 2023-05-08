@@ -1,6 +1,8 @@
 package team11.backend.InformationSecurityProject.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -18,11 +20,13 @@ import team11.backend.InformationSecurityProject.exceptions.BadRequestException;
 import team11.backend.InformationSecurityProject.model.*;
 import team11.backend.InformationSecurityProject.security.RefreshTokenService;
 import team11.backend.InformationSecurityProject.security.TokenUtils;
+import team11.backend.InformationSecurityProject.service.interfaces.AccountActivationService;
 import team11.backend.InformationSecurityProject.service.interfaces.AdminService;
 import team11.backend.InformationSecurityProject.service.interfaces.CertificateRequestService;
 import team11.backend.InformationSecurityProject.service.interfaces.StandardUserService;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @RestController
@@ -33,19 +37,19 @@ public class UserController {
     private final AuthenticationManager authenticationManager;
     private final TokenUtils tokenUtils;
     private final RefreshTokenService refreshTokenService;
-    private final AdminService adminService;
     private final CertificateRequestService certificateRequestService;
+    private final AccountActivationService accountActivationService;
 
     @Autowired
     public UserController(StandardUserService standardUserService, AuthenticationManager authenticationManager, TokenUtils tokenUtils,
-                          RefreshTokenService refreshTokenService, AdminService adminService, CertificateRequestService certificateRequestService){
+                          RefreshTokenService refreshTokenService, AdminService adminService, CertificateRequestService certificateRequestService, AccountActivationService accountActivationService){
 
         this.standardUserService = standardUserService;
         this.authenticationManager = authenticationManager;
         this.tokenUtils = tokenUtils;
         this.refreshTokenService = refreshTokenService;
-        this.adminService = adminService;
         this.certificateRequestService = certificateRequestService;
+        this.accountActivationService = accountActivationService;
     }
     @PostMapping(
             value = "/register",
@@ -53,15 +57,6 @@ public class UserController {
     )
     public ResponseEntity<UserOut> registerStandardUser(@RequestBody @Valid UserIn userDTO){
         StandardUser user = standardUserService.register(userDTO);
-        UserOut userOut = new UserOut(user);
-        return new ResponseEntity<>(userOut, HttpStatus.OK);
-    }
-    @PostMapping(
-            value = "/register/admin",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<UserOut> registerAdmin(@RequestBody @Valid UserIn userDTO){
-        Admin user = adminService.register(userDTO);
         UserOut userOut = new UserOut(user);
         return new ResponseEntity<>(userOut, HttpStatus.OK);
     }
@@ -109,5 +104,19 @@ public class UserController {
             requestDTOS.add(new CertificateRequestOut(request));
         }
         return new ResponseEntity<>(requestDTOS, HttpStatus.OK);
+    }
+
+    @GetMapping(
+            value = "/activate/{activationCode}",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<?> activateAccount(@NotNull(message = "Field (activationCode) is required")
+                                               @Positive(message = "Activation code must be positive")
+                                               @PathVariable(value="activationCode") Integer activationCode){
+
+        accountActivationService.activateAccount(activationCode);
+        HashMap<String, String> response = new HashMap<>();
+        response.put("message", "Successful account activation!");
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
