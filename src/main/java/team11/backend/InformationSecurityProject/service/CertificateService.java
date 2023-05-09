@@ -130,6 +130,11 @@ public class CertificateService implements ICertificateService {
     }
 
     @Override
+    public Certificate getById(Integer id) {
+        return this.certificateRepository.getById(id);
+    }
+
+    @Override
     public Set<CertificateInfoDTO> getCertificatesDTOS(List<Certificate> certificates) {
         if(certificates.size() == 0) return null;
         Set<CertificateInfoDTO> certificateInfoDTOS = new HashSet<>();

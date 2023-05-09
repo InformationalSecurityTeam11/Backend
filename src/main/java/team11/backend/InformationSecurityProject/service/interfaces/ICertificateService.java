@@ -15,6 +15,6 @@ public interface ICertificateService {
 
     boolean validateCertificate(X509Certificate certificate, X509Certificate expectedSigner) throws Exception;
     List<Certificate> getAll();
-
+    Certificate getById(Integer id);
     Set<CertificateInfoDTO> getCertificatesDTOS(List<Certificate> certificates);
 }
