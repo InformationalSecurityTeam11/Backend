@@ -30,7 +30,7 @@ public abstract class User implements UserDetails {
     private String telephoneNumber;
     @Column(name = "email", nullable = false, unique = true)
     private String email;
-    @ElementCollection(fetch = FetchType.LAZY)
+    @ElementCollection(fetch = FetchType.EAGER)
     @Column(name = "old_password")
     private List<String> oldPasswords;
     @Column(name = "password", nullable = false)

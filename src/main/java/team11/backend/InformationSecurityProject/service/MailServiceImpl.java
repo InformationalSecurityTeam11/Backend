@@ -29,7 +29,7 @@ public class MailServiceImpl implements MailService {
     @Autowired
     public MailServiceImpl(){
     }
-    private void sendEmail(){
+    private void sendActivationEmail(){
         ApiClient mailClient = Configuration.getDefaultApiClient();
         mailClient.setApiKey(API_KEY);
 
@@ -51,39 +51,54 @@ public class MailServiceImpl implements MailService {
             throw new RuntimeException(e);
         }
     }
-    private void sendMessage(){
+    private void sendActivationMessage(){
+        // TODO send activation code using WhatsApp or SMS
+    }
 
+    private void sendPasswordResetEmail(){
+        ApiClient mailClient = Configuration.getDefaultApiClient();
+        mailClient.setApiKey(API_KEY);
+
+        TransactionalEmailsApi apiInstance = new TransactionalEmailsApi();
+        SendSmtpEmail email = new SendSmtpEmail();
+        SendSmtpEmailTo receiver = (new SendSmtpEmailTo()).email(user.getEmail());
+
+        email.setTo(List.of(receiver));
+        Map<String, String> params = new HashMap<>();
+        params.put("RESET_URL", "http://localhost:4200/passwordReset&code=" + activationCode.toString());
+        params.put("RESET_CODE", activationCode.toString());
+
+        email.params(params);
+        email.templateId(3L);
+        try {
+            CreateSmtpEmail result = apiInstance.sendTransacEmail(email);
+        } catch (ApiException e) {
+            System.out.println(e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void sendPasswordResetMessage(){
+        // TODO send password reset code using WhatsApp or SMS
+    }
+    @Override
+    public void sendPasswordReset(User user, Integer activationCode, AccountActivationMethod method){
+        this.user = user;
+        this.activationCode = activationCode;
+        if(method == AccountActivationMethod.EMAIL){
+            sendPasswordResetEmail();
+        }else {
+            sendPasswordResetMessage();
+        }
     }
     @Override
     public void sendActivation(User user, Integer activationCode, AccountActivationMethod method) {
         this.user = user;
         this.activationCode = activationCode;
         if(method == AccountActivationMethod.EMAIL){
-            sendEmail();
+            sendActivationEmail();
         }else {
-            sendMessage();
+            sendActivationMessage();
         }
-//        Email from = new Email("information.security.team11@outlook.com");
-//
-//        Email to = new Email(user.getEmail());
-//        Mail mail = new Mail();
-//        mail.setFrom(from);
-//        Personalization personalization = new Personalization();
-//        personalization.addTo(to);
-//        personalization.addDynamicTemplateData("url_page","http://localhost:4200/accountActivation&code=" + activationCode);
-//        personalization.addDynamicTemplateData("user_name", user.getName());
-//        personalization.addDynamicTemplateData("subject","Account activation");
-//        mail.addPersonalization(personalization);
-//        mail.setTemplateId("d-a8dc11707b5a4320872f2d0a8b093948");
-//
-//        Request request = new Request();
-//        try {
-//            request.setMethod(Method.POST);
-//            request.setEndpoint("mail/send");
-//            request.setBody(mail.build());
-//            this.mailSender.api(request);
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
     }
 }

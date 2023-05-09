@@ -20,10 +20,7 @@ import team11.backend.InformationSecurityProject.exceptions.BadRequestException;
 import team11.backend.InformationSecurityProject.model.*;
 import team11.backend.InformationSecurityProject.security.RefreshTokenService;
 import team11.backend.InformationSecurityProject.security.TokenUtils;
-import team11.backend.InformationSecurityProject.service.interfaces.AccountActivationService;
-import team11.backend.InformationSecurityProject.service.interfaces.AdminService;
-import team11.backend.InformationSecurityProject.service.interfaces.CertificateRequestService;
-import team11.backend.InformationSecurityProject.service.interfaces.StandardUserService;
+import team11.backend.InformationSecurityProject.service.interfaces.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,10 +36,11 @@ public class UserController {
     private final RefreshTokenService refreshTokenService;
     private final CertificateRequestService certificateRequestService;
     private final AccountActivationService accountActivationService;
+    private final UserService userService;
 
     @Autowired
     public UserController(StandardUserService standardUserService, AuthenticationManager authenticationManager, TokenUtils tokenUtils,
-                          RefreshTokenService refreshTokenService, AdminService adminService, CertificateRequestService certificateRequestService, AccountActivationService accountActivationService){
+                          RefreshTokenService refreshTokenService, CertificateRequestService certificateRequestService, AccountActivationService accountActivationService, UserService userService){
 
         this.standardUserService = standardUserService;
         this.authenticationManager = authenticationManager;
@@ -50,6 +48,7 @@ public class UserController {
         this.refreshTokenService = refreshTokenService;
         this.certificateRequestService = certificateRequestService;
         this.accountActivationService = accountActivationService;
+        this.userService = userService;
     }
     @PostMapping(
             value = "/register",
@@ -106,6 +105,36 @@ public class UserController {
         return new ResponseEntity<>(requestDTOS, HttpStatus.OK);
     }
 
+    @PostMapping(
+            value = "/password/reset/request",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("hasAnyRole('STANDARD', 'ADMIN')")
+    public ResponseEntity<?> requestPasswordReset(@RequestBody @Valid PasswordResetRequestDTO passwordResetRequestDTO){
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) auth.getPrincipal();
+        String message = userService.requestPasswordReset(user, passwordResetRequestDTO.getPasswordResetMethod());
+        HashMap<String, String> response = new HashMap<>();
+        response.put("message", message);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    @PostMapping(
+            value = "/password/reset/{resetCode}",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("hasAnyRole('STANDARD', 'ADMIN')")
+    public ResponseEntity<?> resetPassword(@NotNull(message = "Field (resetCode) is required")
+                                           @PathVariable(value = "resetCode") Integer resetCode,
+                                           @RequestBody @Valid PasswordResetDTO passwordResetDTO){
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) auth.getPrincipal();
+        userService.resetPassword(passwordResetDTO, resetCode, user);
+        HashMap<String, String> response = new HashMap<>();
+        response.put("message", "Successful password reset");
+        return new ResponseEntity<>(response, HttpStatus.OK);
+
+    }
+
     @GetMapping(
             value = "/activate/{activationCode}",
             produces = MediaType.APPLICATION_JSON_VALUE
@@ -116,7 +145,7 @@ public class UserController {
 
         accountActivationService.activateAccount(activationCode);
         HashMap<String, String> response = new HashMap<>();
-        response.put("message", "Successful account activation!");
+        response.put("message", "Successful account activation");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
