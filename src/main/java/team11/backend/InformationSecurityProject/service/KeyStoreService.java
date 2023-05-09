@@ -1,6 +1,10 @@
 package team11.backend.InformationSecurityProject.service;
 
+import org.springframework.stereotype.Service;
+import team11.backend.InformationSecurityProject.repository.KeyStoreRepository;
+
 import java.io.*;
+import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -8,10 +12,21 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Optional;
 
+@Service
 public class KeyStoreService {
 
-    KeyStore defaultKeystore;
+    private final KeyStoreRepository keyStoreRepository;
+
+    public KeyStoreService(KeyStoreRepository keyStoreRepository) {
+        this.keyStoreRepository = keyStoreRepository;
+    }
+
+    public Certificate getCertificate(BigInteger certificateID){
+        return this.keyStoreRepository.getCertificate(certificateID).orElse(null);
+    }
+
 
     public KeyStore createKeyStore(String password) throws KeyStoreException, CertificateException, IOException, NoSuchAlgorithmException {
         // Create a new empty keystore instance
@@ -94,11 +109,4 @@ public class KeyStoreService {
         return chain;
     }
 
-    public KeyStore getDefaultKeystore() {
-        return defaultKeystore;
-    }
-
-    public void setDefaultKeystore(KeyStore defaultKeystore) {
-        this.defaultKeystore = defaultKeystore;
-    }
 }

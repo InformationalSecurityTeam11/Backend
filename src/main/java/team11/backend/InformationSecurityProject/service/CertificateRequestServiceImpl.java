@@ -8,7 +8,9 @@ import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import team11.backend.InformationSecurityProject.dto.CertificateInfoDTO;
 import team11.backend.InformationSecurityProject.dto.CertificateRequestIn;
+import team11.backend.InformationSecurityProject.dto.RequestInfoDTO;
 import team11.backend.InformationSecurityProject.exceptions.BadRequestException;
 import team11.backend.InformationSecurityProject.exceptions.ForbiddenException;
 import team11.backend.InformationSecurityProject.exceptions.NotFoundException;
@@ -22,9 +24,7 @@ import java.math.BigInteger;
 import java.security.cert.X509Certificate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class CertificateRequestServiceImpl implements CertificateRequestService {
@@ -134,6 +134,18 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
     public List<CertificateRequest> getAll(){
         return certificateRequestRepository.findAll();
     }
+
+    @Override
+    public Set<RequestInfoDTO> getRequestsDTOS(List<CertificateRequest> requests) {
+        if(requests.size() == 0) return null;
+        Set<RequestInfoDTO> certificateRequests = new HashSet<>();
+        for(CertificateRequest r : requests){
+            certificateRequests.add(new RequestInfoDTO(r));
+        }
+        return certificateRequests;
+
+    }
+
     @Override
     public void approve(int id){
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

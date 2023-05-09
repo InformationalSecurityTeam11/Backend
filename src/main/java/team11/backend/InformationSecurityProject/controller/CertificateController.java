@@ -14,11 +14,23 @@ import team11.backend.InformationSecurityProject.exceptions.NotFoundException;
 import team11.backend.InformationSecurityProject.model.Certificate;
 import team11.backend.InformationSecurityProject.model.CertificateRequest;
 import team11.backend.InformationSecurityProject.service.CertificatePreviewServiceImpl;
+import team11.backend.InformationSecurityProject.service.KeyStoreService;
 import team11.backend.InformationSecurityProject.service.interfaces.CertificatePreviewService;
 import team11.backend.InformationSecurityProject.service.interfaces.CertificateRequestService;
 import team11.backend.InformationSecurityProject.service.interfaces.ICertificateService;
 import team11.backend.InformationSecurityProject.utils.CertificateUtility;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+
+import java.math.BigInteger;
+import java.util.Base64;
 import java.util.List;
 import java.util.Set;
 @RestController
@@ -28,12 +40,15 @@ public class CertificateController {
     private final ICertificateService certificateService;
     private final CertificateRequestService certificateRequestService;
     private final CertificatePreviewService certificatePreviewService;
+    private final KeyStoreService keyStoreService;
 
     @Autowired
-    public CertificateController(ICertificateService certificateService, CertificateRequestService certificateRequestService, CertificatePreviewService certificatePreviewService) {
+    public CertificateController(ICertificateService certificateService, CertificateRequestService certificateRequestService, CertificatePreviewService certificatePreviewService,
+                                 KeyStoreService keyStoreService) {
         this.certificateService = certificateService;
         this.certificateRequestService = certificateRequestService;
         this.certificatePreviewService = certificatePreviewService;
+        this.keyStoreService = keyStoreService;
     }
 
     @PostMapping(
@@ -88,4 +103,34 @@ public class CertificateController {
         return new ResponseEntity<>("Certificate request rejected", HttpStatus.OK);
     }
 
+    @GetMapping(value = "/requests")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Set<RequestInfoDTO>> getAllRequests() {
+        List<CertificateRequest> requests = this.certificateRequestService.getAll();
+        return new ResponseEntity<>(this.certificateRequestService.getRequestsDTOS(requests), HttpStatus.OK);
+
+    }
+
+
+    @GetMapping(value = "/download/{id}")
+    @PreAuthorize("hasAnyRole('STANDARD', 'ADMIN')")
+    public ResponseEntity<?> downloadCertificate(@PathVariable Integer id) throws CertificateEncodingException, IOException {
+        Certificate certificateInfo =  this.certificateService.getById(id);
+        if (certificateInfo == null) {
+            return new ResponseEntity<>("Certificate not found", HttpStatus.OK);
+
+        }
+        X509Certificate certificate = (X509Certificate) this.keyStoreService.getCertificate(certificateInfo.getSerialNumber());
+        byte[] certificateData = certificate.getEncoded();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        outputStream.write("-----BEGIN CERTIFICATE-----\n".getBytes());
+        outputStream.write(Base64.getEncoder().encode(certificateData));
+        outputStream.write("\n-----END CERTIFICATE-----\n".getBytes());
+        byte[] fileData = outputStream.toByteArray();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "certificate.cer");
+        headers.setContentLength(fileData.length);
+        return new ResponseEntity<byte[]>(fileData, headers, HttpStatus.OK);
+    }
 }
