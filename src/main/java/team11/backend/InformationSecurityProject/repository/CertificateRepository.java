@@ -11,6 +11,6 @@ import java.util.Optional;
 public interface CertificateRepository extends JpaRepository<Certificate, Integer> {
 
     List<Certificate> findAll();
-    Certificate getById(Integer id);
+
     Optional<Certificate> findCertificateBySerialNumber(BigInteger serial);
 }
