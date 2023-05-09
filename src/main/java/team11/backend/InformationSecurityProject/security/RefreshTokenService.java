@@ -6,7 +6,7 @@ import team11.backend.InformationSecurityProject.exceptions.ForbiddenException;
 import team11.backend.InformationSecurityProject.exceptions.NotFoundException;
 import team11.backend.InformationSecurityProject.model.RefreshToken;
 import team11.backend.InformationSecurityProject.model.User;
-import team11.backend.InformationSecurityProject.service.interfaces.IUserService;
+import team11.backend.InformationSecurityProject.service.interfaces.UserService;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -18,10 +18,10 @@ public class RefreshTokenService {
     // Period vazenja refresh tokena - 1 dan
     @Value("86400000")
     private int REFRESH_TOKEN_EXPIRES_IN;
-    private final IUserService userService;
+    private final UserService userService;
     private final RefreshTokenRepository refreshTokenRepository;
 
-    public RefreshTokenService(IUserService userService, RefreshTokenRepository refreshTokenRepository){
+    public RefreshTokenService(UserService userService, RefreshTokenRepository refreshTokenRepository){
         this.userService = userService;
         this.refreshTokenRepository = refreshTokenRepository;
     }
