@@ -1,6 +1,8 @@
 package team11.backend.InformationSecurityProject.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -18,11 +20,10 @@ import team11.backend.InformationSecurityProject.exceptions.BadRequestException;
 import team11.backend.InformationSecurityProject.model.*;
 import team11.backend.InformationSecurityProject.security.RefreshTokenService;
 import team11.backend.InformationSecurityProject.security.TokenUtils;
-import team11.backend.InformationSecurityProject.service.interfaces.AdminService;
-import team11.backend.InformationSecurityProject.service.interfaces.CertificateRequestService;
-import team11.backend.InformationSecurityProject.service.interfaces.StandardUserService;
+import team11.backend.InformationSecurityProject.service.interfaces.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @RestController
@@ -33,19 +34,21 @@ public class UserController {
     private final AuthenticationManager authenticationManager;
     private final TokenUtils tokenUtils;
     private final RefreshTokenService refreshTokenService;
-    private final AdminService adminService;
     private final CertificateRequestService certificateRequestService;
+    private final AccountActivationService accountActivationService;
+    private final UserService userService;
 
     @Autowired
     public UserController(StandardUserService standardUserService, AuthenticationManager authenticationManager, TokenUtils tokenUtils,
-                          RefreshTokenService refreshTokenService, AdminService adminService, CertificateRequestService certificateRequestService){
+                          RefreshTokenService refreshTokenService, CertificateRequestService certificateRequestService, AccountActivationService accountActivationService, UserService userService){
 
         this.standardUserService = standardUserService;
         this.authenticationManager = authenticationManager;
         this.tokenUtils = tokenUtils;
         this.refreshTokenService = refreshTokenService;
-        this.adminService = adminService;
         this.certificateRequestService = certificateRequestService;
+        this.accountActivationService = accountActivationService;
+        this.userService = userService;
     }
     @PostMapping(
             value = "/register",
@@ -53,15 +56,6 @@ public class UserController {
     )
     public ResponseEntity<UserOut> registerStandardUser(@RequestBody @Valid UserIn userDTO){
         StandardUser user = standardUserService.register(userDTO);
-        UserOut userOut = new UserOut(user);
-        return new ResponseEntity<>(userOut, HttpStatus.OK);
-    }
-    @PostMapping(
-            value = "/register/admin",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<UserOut> registerAdmin(@RequestBody @Valid UserIn userDTO){
-        Admin user = adminService.register(userDTO);
         UserOut userOut = new UserOut(user);
         return new ResponseEntity<>(userOut, HttpStatus.OK);
     }
@@ -109,5 +103,49 @@ public class UserController {
             requestDTOS.add(new CertificateRequestOut(request));
         }
         return new ResponseEntity<>(requestDTOS, HttpStatus.OK);
+    }
+
+    @PostMapping(
+            value = "/password/reset/request",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("hasAnyRole('STANDARD', 'ADMIN')")
+    public ResponseEntity<?> requestPasswordReset(@RequestBody @Valid PasswordResetRequestDTO passwordResetRequestDTO){
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) auth.getPrincipal();
+        String message = userService.requestPasswordReset(user, passwordResetRequestDTO.getPasswordResetMethod());
+        HashMap<String, String> response = new HashMap<>();
+        response.put("message", message);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    @PostMapping(
+            value = "/password/reset/{resetCode}",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("hasAnyRole('STANDARD', 'ADMIN')")
+    public ResponseEntity<?> resetPassword(@NotNull(message = "Field (resetCode) is required")
+                                           @PathVariable(value = "resetCode") Integer resetCode,
+                                           @RequestBody @Valid PasswordResetDTO passwordResetDTO){
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) auth.getPrincipal();
+        userService.resetPassword(passwordResetDTO, resetCode, user);
+        HashMap<String, String> response = new HashMap<>();
+        response.put("message", "Successful password reset");
+        return new ResponseEntity<>(response, HttpStatus.OK);
+
+    }
+
+    @GetMapping(
+            value = "/activate/{activationCode}",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<?> activateAccount(@NotNull(message = "Field (activationCode) is required")
+                                               @Positive(message = "Activation code must be positive")
+                                               @PathVariable(value="activationCode") Integer activationCode){
+
+        accountActivationService.activateAccount(activationCode);
+        HashMap<String, String> response = new HashMap<>();
+        response.put("message", "Successful account activation");
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
