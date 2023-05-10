@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import team11.backend.InformationSecurityProject.exceptions.NotFoundException;
 import team11.backend.InformationSecurityProject.model.Certificate;
+import team11.backend.InformationSecurityProject.repository.CRLRepository;
 import team11.backend.InformationSecurityProject.repository.CertificateRepository;
 import team11.backend.InformationSecurityProject.service.interfaces.CertificatePreviewService;
 
@@ -19,10 +20,12 @@ import java.util.Optional;
 public class CertificatePreviewServiceImpl implements CertificatePreviewService {
 
     private final CertificateRepository certificateRepository;
+    private final CRLRepository crlRepository;
     @Autowired
-    public CertificatePreviewServiceImpl(CertificateRepository certificateRepository){
+    public CertificatePreviewServiceImpl(CertificateRepository certificateRepository, CRLRepository crlRepository){
 
         this.certificateRepository = certificateRepository;
+        this.crlRepository = crlRepository;
     }
     @Override
     public Certificate insert(Certificate certificate){
@@ -71,5 +74,13 @@ public class CertificatePreviewServiceImpl implements CertificatePreviewService 
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public void revokeCertificate(X509Certificate certificate) {
+        crlRepository.revokeCertificate(certificate);
+    }
+
+    public boolean isRevoked(X509Certificate certificate) {
+        return crlRepository.isRevoked(certificate);
     }
 }

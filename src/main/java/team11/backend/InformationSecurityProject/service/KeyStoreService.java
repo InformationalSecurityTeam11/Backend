@@ -74,12 +74,19 @@ public class KeyStoreService {
     }
 
     public X509Certificate getCertificateFromKeyStore(KeyStore keystore, String alias) throws Exception {
+        if(keystore == null){
+            keystore = this.
+        }
         if (!keystore.containsAlias(alias)) {
             throw new Exception("Certificate with alias " + alias + " not found in keystore");
         }
 
         return (X509Certificate) keystore.getCertificate(alias);
     }
+
+
+
+
 
     public void deleteEntryFromKeyStore(KeyStore keyStore, String alias) throws KeyStoreException {
         keyStore.deleteEntry(alias);

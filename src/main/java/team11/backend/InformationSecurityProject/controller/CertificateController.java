@@ -148,4 +148,17 @@ public class CertificateController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error verifying certificate");
         }
     }
+
+    @PostMapping("/revoke")
+    public ResponseEntity<String> revokeCertificate(@RequestParam("serialNumber") BigInteger serialNumber) {
+        String alias = "CERTIFICATE_" + serialNumber;
+        
+    }
+
+    @GetMapping("/revoke/check/")
+    public ResponseEntity<Boolean> isRevoked(@RequestBody X509Certificate certificate) {
+        boolean revoked = certificatePreviewService.isRevoked(certificate);
+        return ResponseEntity.ok(revoked);
+    }
+
 }

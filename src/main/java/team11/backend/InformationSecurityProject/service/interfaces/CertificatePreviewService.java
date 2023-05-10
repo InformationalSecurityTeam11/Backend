@@ -5,6 +5,7 @@ import team11.backend.InformationSecurityProject.service.CertificatePreviewServi
 
 import java.io.InputStream;
 import java.math.BigInteger;
+import java.security.cert.X509Certificate;
 
 public interface CertificatePreviewService {
     Certificate insert(Certificate certificate);
@@ -16,6 +17,10 @@ public interface CertificatePreviewService {
     public CertificateValidationObject validateCertificate(BigInteger serialNumber);
 
     boolean verifyUploadedCertificate(InputStream inputStream);
+
+    void revokeCertificate(X509Certificate certificate);
+
+    boolean isRevoked(X509Certificate certificate);
 
     public class CertificateValidationObject{
         public Certificate certificate;

@@ -15,7 +15,7 @@ public class CertificateUtility {
 
     }
 
-    public KeyPair generateKeyPair() throws NoSuchAlgorithmException, NoSuchProviderException {
+    public static KeyPair generateKeyPair() throws NoSuchAlgorithmException, NoSuchProviderException {
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
         SecureRandom random = SecureRandom.getInstance("SHA1PRNG", "SUN");
         keyPairGenerator.initialize(2048, random);
