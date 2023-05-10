@@ -72,10 +72,10 @@ public class WebSecurityConfig {
         http.cors();
         http.headers().frameOptions().disable();
         http.authorizeHttpRequests()
+                .requestMatchers(HttpMethod.POST, "/api/user/register/admin").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/user/register").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/user/login").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/user/logout").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/user/activate/*").permitAll()
                 .requestMatchers(toH2Console()).permitAll().
                 anyRequest().authenticated().and()
                 .exceptionHandling().accessDeniedHandler(this.restAccessDeniedHandler).and()

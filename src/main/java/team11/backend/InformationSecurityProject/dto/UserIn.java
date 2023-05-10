@@ -2,7 +2,6 @@ package team11.backend.InformationSecurityProject.dto;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import team11.backend.InformationSecurityProject.model.AccountActivationMethod;
 
 @NoArgsConstructor
 @Data
@@ -22,6 +21,6 @@ public class UserIn {
     private String email;
     @Size(min=6, max = 30, message = "Field (password) cannot be less than 6 characters and more than 30 characters long")
     private String password;
-    @NotNull(message = "Field (activationMethod) is required")
-    private AccountActivationMethod activationMethod;
+
+
 }

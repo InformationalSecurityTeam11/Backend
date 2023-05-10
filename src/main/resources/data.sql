@@ -7,6 +7,5 @@ VALUES ('STANDARD','aleksandrab024@hotmail.com', '2023-05-01T04:49:27Z', 'Aleksa
        ('STANDARD','vladadevic@gmail.com', '2023-05-01T04:49:27Z', 'Vlada', '$2a$10$iZZWXRF1TFvTNwq9pobYRO8SmuQ9ALEDGtEy4iXNG.bihvOwEJttu', 'Devic', '0613191670', '2'),
        ('ADMIN','veljkovex@gmail.com', '2023-05-01T04:49:27Z', 'Veljko', '$2a$10$iZZWXRF1TFvTNwq9pobYRO8SmuQ9ALEDGtEy4iXNG.bihvOwEJttu', 'Bubnjevic', '0612638823', '1');
 
-
 -- Ako ne radi login na preloaded korisnike probaj da promenis last_password_reset_date na noviji datum
 -- password: 123456 -> $2a$10$iZZWXRF1TFvTNwq9pobYRO8SmuQ9ALEDGtEy4iXNG.bihvOwEJttu
