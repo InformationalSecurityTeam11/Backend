@@ -14,7 +14,6 @@ import java.util.random.RandomGenerator;
 @NoArgsConstructor
 @Table(name = "password_resets")
 public class PasswordReset {
-
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.REFRESH)
     @JoinColumn(name = "user_id")
     private User user;
@@ -26,13 +25,13 @@ public class PasswordReset {
     @Column(name = "code", nullable = false)
     private Integer code;
 
-    public boolean isApproved(Integer userID){
-        return getDateCreated().plus(getLifeSpan()).isAfter(LocalDateTime.now()) && Objects.equals(getUser().getId(), userID);
+    public boolean isValid(){
+        return getDateCreated().plus(getLifeSpan()).isAfter(LocalDateTime.now());
     }
     public PasswordReset(User user, Duration lifeSpan) {
-        this.user = user;
         this.dateCreated = LocalDateTime.now();
         this.lifeSpan = lifeSpan;
+        this.user = user;
         this.code = Math.abs(user.hashCode() + dateCreated.hashCode() + RandomGenerator.getDefault().nextInt(100));
     }
 }

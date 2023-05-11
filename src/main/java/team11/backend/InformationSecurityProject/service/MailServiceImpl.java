@@ -55,40 +55,39 @@ public class MailServiceImpl implements MailService {
         // TODO send activation code using WhatsApp or SMS
     }
 
-    private void sendPasswordResetEmail(){
+    private void sendPasswordResetEmail(String email){
         ApiClient mailClient = Configuration.getDefaultApiClient();
         mailClient.setApiKey(API_KEY);
 
         TransactionalEmailsApi apiInstance = new TransactionalEmailsApi();
-        SendSmtpEmail email = new SendSmtpEmail();
-        SendSmtpEmailTo receiver = (new SendSmtpEmailTo()).email(user.getEmail());
+        SendSmtpEmail emailSender = new SendSmtpEmail();
+        SendSmtpEmailTo receiver = (new SendSmtpEmailTo()).email(email);
 
-        email.setTo(List.of(receiver));
+        emailSender.setTo(List.of(receiver));
         Map<String, String> params = new HashMap<>();
         params.put("RESET_URL", "http://localhost:4200/passwordReset&code=" + activationCode.toString());
         params.put("RESET_CODE", activationCode.toString());
 
-        email.params(params);
-        email.templateId(3L);
+        emailSender.params(params);
+        emailSender.templateId(3L);
         try {
-            CreateSmtpEmail result = apiInstance.sendTransacEmail(email);
+            CreateSmtpEmail result = apiInstance.sendTransacEmail(emailSender);
         } catch (ApiException e) {
             System.out.println(e.getMessage());
             throw new RuntimeException(e);
         }
     }
 
-    private void sendPasswordResetMessage(){
+    private void sendPasswordResetMessage(String phoneNumber){
         // TODO send password reset code using WhatsApp or SMS
     }
     @Override
-    public void sendPasswordReset(User user, Integer activationCode, AccountActivationMethod method){
-        this.user = user;
+    public void sendPasswordReset(String contact, Integer activationCode, AccountActivationMethod method){
         this.activationCode = activationCode;
         if(method == AccountActivationMethod.EMAIL){
-            sendPasswordResetEmail();
+            sendPasswordResetEmail(contact);
         }else {
-            sendPasswordResetMessage();
+            sendPasswordResetMessage(contact);
         }
     }
     @Override

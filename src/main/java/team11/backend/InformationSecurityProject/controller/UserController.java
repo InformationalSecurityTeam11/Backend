@@ -109,11 +109,8 @@ public class UserController {
             value = "/password/reset/request",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    @PreAuthorize("hasAnyRole('STANDARD', 'ADMIN')")
     public ResponseEntity<?> requestPasswordReset(@RequestBody @Valid PasswordResetRequestDTO passwordResetRequestDTO){
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User user = (User) auth.getPrincipal();
-        String message = userService.requestPasswordReset(user, passwordResetRequestDTO.getPasswordResetMethod());
+        String message = userService.requestPasswordReset(passwordResetRequestDTO);
         HashMap<String, String> response = new HashMap<>();
         response.put("message", message);
         return new ResponseEntity<>(response, HttpStatus.OK);
@@ -122,13 +119,10 @@ public class UserController {
             value = "/password/reset/{resetCode}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    @PreAuthorize("hasAnyRole('STANDARD', 'ADMIN')")
     public ResponseEntity<?> resetPassword(@NotNull(message = "Field (resetCode) is required")
                                            @PathVariable(value = "resetCode") Integer resetCode,
                                            @RequestBody @Valid PasswordResetDTO passwordResetDTO){
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User user = (User) auth.getPrincipal();
-        userService.resetPassword(passwordResetDTO, resetCode, user);
+        userService.resetPassword(passwordResetDTO, resetCode);
         HashMap<String, String> response = new HashMap<>();
         response.put("message", "Successful password reset");
         return new ResponseEntity<>(response, HttpStatus.OK);

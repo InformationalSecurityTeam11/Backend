@@ -74,6 +74,8 @@ public class WebSecurityConfig {
         http.authorizeHttpRequests()
                 .requestMatchers(HttpMethod.POST, "/api/user/register").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/user/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/user/password/reset/request").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/user/password/reset/*").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/user/logout").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/user/activate/*").permitAll()
                 .requestMatchers(toH2Console()).permitAll().
