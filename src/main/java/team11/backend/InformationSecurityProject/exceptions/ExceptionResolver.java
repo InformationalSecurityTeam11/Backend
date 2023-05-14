@@ -47,10 +47,12 @@ public class ExceptionResolver {
     }
 
     @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<String> forbiddenException(ForbiddenException exception) {
+    public ResponseEntity<?> forbiddenException(ForbiddenException exception) {
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.TEXT_PLAIN);
-        return new ResponseEntity<>(exception.getMessage(), headers, HttpStatus.FORBIDDEN);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HashMap<String, String> response = new HashMap<>();
+        response.put("message", exception.getMessage());
+        return new ResponseEntity<>(response, headers, HttpStatus.FORBIDDEN);
     }
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<?> processConversionException(HttpMessageNotReadableException e) {
