@@ -9,17 +9,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import team11.backend.InformationSecurityProject.dto.*;
 import team11.backend.InformationSecurityProject.exceptions.BadRequestException;
 import team11.backend.InformationSecurityProject.model.*;
-import team11.backend.InformationSecurityProject.security.RefreshTokenService;
-import team11.backend.InformationSecurityProject.security.TokenUtils;
 import team11.backend.InformationSecurityProject.service.interfaces.*;
 
 import java.util.ArrayList;
@@ -31,24 +26,20 @@ import java.util.List;
 public class UserController {
 
     private final StandardUserService standardUserService;
-    private final AuthenticationManager authenticationManager;
-    private final TokenUtils tokenUtils;
-    private final RefreshTokenService refreshTokenService;
+
     private final CertificateRequestService certificateRequestService;
     private final AccountActivationService accountActivationService;
     private final UserService userService;
+    private final AuthService authService;
 
     @Autowired
-    public UserController(StandardUserService standardUserService, AuthenticationManager authenticationManager, TokenUtils tokenUtils,
-                          RefreshTokenService refreshTokenService, CertificateRequestService certificateRequestService, AccountActivationService accountActivationService, UserService userService){
+    public UserController(StandardUserService standardUserService, CertificateRequestService certificateRequestService, AccountActivationService accountActivationService, UserService userService, AuthService authService){
 
         this.standardUserService = standardUserService;
-        this.authenticationManager = authenticationManager;
-        this.tokenUtils = tokenUtils;
-        this.refreshTokenService = refreshTokenService;
         this.certificateRequestService = certificateRequestService;
         this.accountActivationService = accountActivationService;
         this.userService = userService;
+        this.authService = authService;
     }
     @PostMapping(
             value = "/register",
@@ -64,19 +55,7 @@ public class UserController {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public ResponseEntity<TokenStateOut> login(@RequestBody @Valid LoginCredentials credentials){
-        Authentication authentication;
-        try {
-             authentication = this.authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(credentials.getEmail(), credentials.getPassword()));
-
-        }catch (AuthenticationException e){
-            throw new BadRequestException("Wrong email or password");
-        }
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        User user = (User) authentication.getPrincipal();
-        String jwt = this.tokenUtils.generateToken(user);
-        String refreshToken = this.refreshTokenService.createRefreshToken(user).getToken();
-        return new ResponseEntity<>(new TokenStateOut(jwt, refreshToken), HttpStatus.OK);
+        return new ResponseEntity<>(authService.login(credentials), HttpStatus.OK);
     }
 
     @GetMapping(
