@@ -44,15 +44,16 @@ public abstract class User implements UserDetails {
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
-
     public void setPassword(String password){
+        if(oldPasswords != null){
+            oldPasswords.add(password);
+        }else {
+            oldPasswords = List.of(password);
+        }
         Timestamp now = new Timestamp((new Date()).getTime());
         this.setLastPasswordResetDate(now);
         this.password = password;
     }
-
-
-
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
