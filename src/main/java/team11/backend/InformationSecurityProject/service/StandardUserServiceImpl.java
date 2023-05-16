@@ -59,7 +59,7 @@ public class StandardUserServiceImpl implements StandardUserService {
         AccountActivation activation = new AccountActivation(user, Duration.ofDays(1));
         accountActivationService.insert(activation);
 
-        mailService.sendActivation(userSaved, activation.getCode(), userDTO.getActivationMethod());
+        mailService.sendActivation(userSaved, activation.getCode(), userDTO.getActivationMethod(), "http://localhost:4200/accountActivation");
         return userSaved;
     }
 }
