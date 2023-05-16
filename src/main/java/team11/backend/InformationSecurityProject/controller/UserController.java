@@ -54,8 +54,19 @@ public class UserController {
             value = "/login",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<TokenStateOut> login(@RequestBody @Valid LoginCredentials credentials){
-        return new ResponseEntity<>(authService.login(credentials), HttpStatus.OK);
+    public ResponseEntity<?> login(@RequestBody @Valid LoginCredentials credentials){
+        String message = authService.login(credentials);
+        HashMap<String, String> response = new HashMap<>();
+        response.put("message", message);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    @PostMapping(
+            value = "/login/confirm/{verificationCode}",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<TokenStateOut> confirmLogin(@NotNull(message = "Field (verificationCode) is required")
+                                                          @PathVariable(value = "verificationCode") Integer verificationCode){
+        return new ResponseEntity<>(authService.confirmLogin(verificationCode), HttpStatus.OK);
     }
 
     @GetMapping(

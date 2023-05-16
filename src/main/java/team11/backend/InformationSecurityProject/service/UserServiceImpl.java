@@ -2,8 +2,6 @@ package team11.backend.InformationSecurityProject.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import team11.backend.InformationSecurityProject.dto.PasswordResetDTO;
@@ -11,9 +9,10 @@ import team11.backend.InformationSecurityProject.dto.PasswordResetRequestDTO;
 import team11.backend.InformationSecurityProject.exceptions.BadRequestException;
 import team11.backend.InformationSecurityProject.exceptions.NotFoundException;
 import team11.backend.InformationSecurityProject.model.AccountActivationMethod;
-import team11.backend.InformationSecurityProject.model.PasswordReset;
+import team11.backend.InformationSecurityProject.model.VerificationCode;
 import team11.backend.InformationSecurityProject.model.User;
-import team11.backend.InformationSecurityProject.repository.PasswordResetRepository;
+import team11.backend.InformationSecurityProject.model.VerificationCodeType;
+import team11.backend.InformationSecurityProject.repository.VerificationCodeRepository;
 import team11.backend.InformationSecurityProject.repository.UserRepository;
 import team11.backend.InformationSecurityProject.service.interfaces.MailService;
 import team11.backend.InformationSecurityProject.service.interfaces.UserService;
@@ -27,15 +26,14 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final MailService mailService;
-    private final PasswordResetRepository passwordResetRepository;
-    private final AuthenticationManager authenticationManager;
+    private final VerificationCodeRepository verificationCodeRepository;
+
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, MailService mailService, PasswordResetRepository passwordResetRepository, AuthenticationManager authenticationManager1){
+    public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, MailService mailService, VerificationCodeRepository verificationCodeRepository, AuthenticationManager authenticationManager1){
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.mailService = mailService;
-        this.passwordResetRepository = passwordResetRepository;
-        this.authenticationManager = authenticationManager1;
+        this.verificationCodeRepository = verificationCodeRepository;
     }
 
     @Override
@@ -66,9 +64,9 @@ public class UserServiceImpl implements UserService {
         }
         User user = userOpt.get();
 
-        PasswordReset passwordReset = new PasswordReset(user, Duration.ofMinutes(durationInMinutes));
-        passwordResetRepository.save(passwordReset);
-        mailService.sendPasswordReset(passwordResetRequestDTO.getContact(), passwordReset.getCode(), passwordResetRequestDTO.getPasswordResetMethod());
+        VerificationCode verificationCode = new VerificationCode(user, Duration.ofMinutes(durationInMinutes), VerificationCodeType.PASSWORD_RESET);
+        verificationCodeRepository.save(verificationCode);
+        mailService.sendVerificationCode(passwordResetRequestDTO.getContact(), verificationCode.getCode(), passwordResetRequestDTO.getPasswordResetMethod(), VerificationCodeType.PASSWORD_RESET, "http://localhost:4200/passwordReset");
 
         if(passwordResetRequestDTO.getPasswordResetMethod() == AccountActivationMethod.EMAIL){
             return "Check your email for reset code";
@@ -78,14 +76,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void resetPassword(PasswordResetDTO passwordResetDTO, Integer resetCode){
-        Optional<PasswordReset> passwordResetInstanceOptional = passwordResetRepository.findById(resetCode);
-        if(passwordResetInstanceOptional.isEmpty()){
+        Optional<VerificationCode> verificationCodeOptional = verificationCodeRepository.findByCodeAndType(resetCode, VerificationCodeType.PASSWORD_RESET);
+        if(verificationCodeOptional.isEmpty()){
             throw new BadRequestException("Reset code is not valid");
         }
 
-        PasswordReset passwordReset = passwordResetInstanceOptional.get();
-        User user = passwordReset.getUser();
-        if(!passwordReset.isValid()){
+        VerificationCode verificationCode = verificationCodeOptional.get();
+        User user = verificationCode.getUser();
+        if(!verificationCode.isValid()){
             throw new BadRequestException("Reset code is not valid");
         }
 
@@ -101,6 +99,6 @@ public class UserServiceImpl implements UserService {
         user.setPassword(newPasswordEncoded);
 
         userRepository.save(user);
-        passwordResetRepository.delete(passwordReset);
+        verificationCodeRepository.delete(verificationCode);
     }
 }
