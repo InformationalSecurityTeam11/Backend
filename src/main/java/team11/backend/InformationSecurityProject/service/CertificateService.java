@@ -12,6 +12,7 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.springframework.stereotype.Service;
 import team11.backend.InformationSecurityProject.dto.CertificateInfoDTO;
 import team11.backend.InformationSecurityProject.model.Certificate;
+import team11.backend.InformationSecurityProject.model.User;
 import team11.backend.InformationSecurityProject.repository.CertificateRepository;
 import team11.backend.InformationSecurityProject.repository.KeyStoreRepository;
 import team11.backend.InformationSecurityProject.service.interfaces.CertificatePreviewService;
@@ -132,6 +133,16 @@ public class CertificateService implements ICertificateService {
     @Override
     public Certificate getById(Integer id) {
         return this.certificateRepository.getById(id);
+    }
+
+    @Override
+    public Optional<Certificate> findCertificateBySerialNumber(BigInteger serial) {
+        return this.certificateRepository.findCertificateBySerialNumber(serial);
+    }
+
+    @Override
+    public List<Certificate> getCertificateByUser(User user) {
+        return this.certificateRepository.getCertificateByUser(user);
     }
 
     @Override
