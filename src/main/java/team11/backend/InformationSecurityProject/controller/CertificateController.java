@@ -10,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import team11.backend.InformationSecurityProject.dto.*;
 import team11.backend.InformationSecurityProject.exceptions.BadRequestException;
 import team11.backend.InformationSecurityProject.exceptions.NotFoundException;
@@ -149,5 +150,19 @@ public class CertificateController {
         headers.setContentDispositionFormData("attachment", "certificate.cer");
         headers.setContentLength(fileData.length);
         return new ResponseEntity<byte[]>(fileData, headers, HttpStatus.OK);
+    }
+
+    @PostMapping("/verify/upload")
+    public ResponseEntity<String> verifyUploadedCertificate(@RequestPart("file") MultipartFile file) {
+        try {
+            boolean isValid = certificatePreviewService.verifyUploadedCertificate(file.getInputStream());
+            if (isValid) {
+                return ResponseEntity.ok("Certificate is valid");
+            } else {
+                return ResponseEntity.ok("Certificate is invalid");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error verifying certificate");
+        }
     }
 }

@@ -3,6 +3,7 @@ package team11.backend.InformationSecurityProject.service.interfaces;
 import team11.backend.InformationSecurityProject.model.Certificate;
 import team11.backend.InformationSecurityProject.service.CertificatePreviewServiceImpl;
 
+import java.io.InputStream;
 import java.math.BigInteger;
 
 public interface CertificatePreviewService {
@@ -13,6 +14,8 @@ public interface CertificatePreviewService {
     Certificate getBySerial(BigInteger serialNumber);
 
     public CertificateValidationObject validateCertificate(BigInteger serialNumber);
+
+    boolean verifyUploadedCertificate(InputStream inputStream);
 
     public class CertificateValidationObject{
         public Certificate certificate;
