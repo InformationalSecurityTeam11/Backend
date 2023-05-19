@@ -20,12 +20,10 @@ import java.util.Optional;
 public class CertificatePreviewServiceImpl implements CertificatePreviewService {
 
     private final CertificateRepository certificateRepository;
-    private final CRLRepository crlRepository;
     @Autowired
-    public CertificatePreviewServiceImpl(CertificateRepository certificateRepository, CRLRepository crlRepository){
+    public CertificatePreviewServiceImpl(CertificateRepository certificateRepository){
 
         this.certificateRepository = certificateRepository;
-        this.crlRepository = crlRepository;
     }
     @Override
     public Certificate insert(Certificate certificate){
@@ -76,11 +74,4 @@ public class CertificatePreviewServiceImpl implements CertificatePreviewService 
         }
     }
 
-    public void revokeCertificate(X509Certificate certificate) {
-        crlRepository.revokeCertificate(certificate);
-    }
-
-    public boolean isRevoked(X509Certificate certificate) {
-        return crlRepository.isRevoked(certificate);
-    }
 }

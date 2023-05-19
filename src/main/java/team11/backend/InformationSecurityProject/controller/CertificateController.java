@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import team11.backend.InformationSecurityProject.dto.*;
 import team11.backend.InformationSecurityProject.exceptions.BadRequestException;
+import team11.backend.InformationSecurityProject.exceptions.ForbiddenException;
 import team11.backend.InformationSecurityProject.exceptions.NotFoundException;
 import team11.backend.InformationSecurityProject.model.Certificate;
 import team11.backend.InformationSecurityProject.model.CertificateRequest;
@@ -149,16 +150,49 @@ public class CertificateController {
         }
     }
 
-    @PostMapping("/revoke")
+    @PostMapping(
+            value = "/revoke",
+            consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("hasAnyRole('STANDARD', 'ADMIN')")
     public ResponseEntity<String> revokeCertificate(@RequestParam("serialNumber") BigInteger serialNumber) {
-        String alias = "CERTIFICATE_" + serialNumber;
-        
+        try{
+            boolean isRevoked = certificateService.revoke(serialNumber);
+            if (isRevoked) {
+                return ResponseEntity.ok("Certificate has been revoked");
+            }
+
+        }catch (NotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }catch (ForbiddenException e){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error verifying certificate");
+        }
+        return null;
     }
 
-    @GetMapping("/revoke/check/")
-    public ResponseEntity<Boolean> isRevoked(@RequestBody X509Certificate certificate) {
-        boolean revoked = certificatePreviewService.isRevoked(certificate);
-        return ResponseEntity.ok(revoked);
+    @PostMapping(
+            value = "/revoke/check",
+            consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("hasAnyRole('STANDARD', 'ADMIN')")
+    public ResponseEntity<String> isRevoked(@RequestParam("serialNumber") BigInteger serialNumber) {
+        try{
+            boolean revoked =  certificateService.isRevoked(serialNumber);
+            if(revoked) return ResponseEntity.ok("This certificate is revoked");
+            else return ResponseEntity.ok("This certificate is not revoked");
+
+        } catch (Exception e) {
+            return ResponseEntity.ok(e.getMessage());
+            //return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Certificate with that serial number does not exist");
+        }
+    }
+
+    @GetMapping(value = "/revoke/check")
+    public ResponseEntity<String> test() {
+        this.certificateService.test();
+        return ResponseEntity.ok("This certificate is not revoked");
     }
 
 }

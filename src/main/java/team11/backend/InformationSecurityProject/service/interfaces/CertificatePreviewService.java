@@ -18,10 +18,6 @@ public interface CertificatePreviewService {
 
     boolean verifyUploadedCertificate(InputStream inputStream);
 
-    void revokeCertificate(X509Certificate certificate);
-
-    boolean isRevoked(X509Certificate certificate);
-
     public class CertificateValidationObject{
         public Certificate certificate;
         public boolean isValid;
@@ -30,4 +26,5 @@ public interface CertificatePreviewService {
             this.certificate = certificate;
         }
     }
+
 }

@@ -17,4 +17,9 @@ public interface ICertificateService {
     List<Certificate> getAll();
     Certificate getById(Integer id);
     Set<CertificateInfoDTO> getCertificatesDTOS(List<Certificate> certificates);
+    public boolean isRevoked(BigInteger serialNumber);
+    public boolean revoke(BigInteger serialNumber);
+    public X509Certificate getCertificate(BigInteger serialNumber);
+
+    public void test();
 }

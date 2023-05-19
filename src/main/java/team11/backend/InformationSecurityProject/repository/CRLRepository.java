@@ -12,15 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import team11.backend.InformationSecurityProject.utils.CertificateUtility;
 
-import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import javax.security.auth.x500.X500Principal;
+import java.io.*;
 import java.math.BigInteger;
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.PrivateKey;
+import java.security.*;
 import java.security.cert.*;
 import java.time.Instant;
 import java.util.*;
@@ -29,62 +24,96 @@ import java.util.*;
 public class CRLRepository {
     private X509CRL crl;
     private String CRL_FILENAME = "./src/main/java/team11/backend/InformationSecurityProject/cert/revoked.crl";
-    private boolean initialize = true;
-    private KeyStoreRepository keyStoreRepository;
+    private boolean initialized = false;
+    public CRLRepository() {
+        this.initialized = false;
+    }
 
-    @Autowired
-    public CRLRepository(KeyStoreRepository keyStoreRepository) {
-        this.keyStoreRepository = keyStoreRepository;
+    public X509CRL getCRL() {
+        if (crl == null) {
+            loadCRL();
+        }
+        return crl;
+    }
+
+    private void saveCRL() throws IOException, CRLException {
+        FileOutputStream fos = new FileOutputStream(CRL_FILENAME);
+        fos.write(crl.getEncoded());
+        fos.close();
+    }
+
+
+    public void loadCRL() {
+        if (this.initialized) {
+            try {
+                crl = generateCRLFromFile();
+                this.crl = crl;
+                saveCRL();
+            } catch (IOException | CertificateException | CRLException e) {
+                throw new RuntimeException("Failed to load CRL from file.", e);
+            }
+        } else {
+            try {
+                crl = generateNewCRL();
+                this.crl = crl;
+                saveCRL();
+                this.initialized = true;
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to generate a new CRL.", e);
+            }
+        }
+    }
+
+    private X509CRL generateNewCRL() {
         try {
+            KeyPair keyPair = CertificateUtility.generateKeyPair();
+            PrivateKey privateKey = keyPair.getPrivate();
+            X509v2CRLBuilder crlBuilder = new X509v2CRLBuilder(new X500Name("CN=Issuer Common Name, OU=Issuer Organizational Unit, O=Issuer Organization, L=Issuer Locality, ST=Issuer State, C=Issuer Country"), new Date());
+            crlBuilder.setNextUpdate(Date.from(Instant.now().plusSeconds(86400))); // Set the nextUpdate date (e.g., 24 hours from now)
+            ContentSigner contentSigner = new JcaContentSignerBuilder("SHA256WithRSA").build(privateKey);
+            X509CRLHolder crlHolder = crlBuilder.build(contentSigner);
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            FileInputStream crlFile = new FileInputStream(CRL_FILENAME);
-            this.crl = (X509CRL) cf.generateCRL(crlFile);
-        } catch (FileNotFoundException e) {
+            byte[] encodedCrl = crlHolder.getEncoded();
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(encodedCrl);
+            X509CRL newCrl = (X509CRL) cf.generateCRL(inputStream);
+            return newCrl;
+        } catch (CertificateException | CRLException | IOException | OperatorCreationException | NoSuchAlgorithmException e) {
+            throw new RuntimeException("Failed to generate the new CRL.", e);
+        } catch (NoSuchProviderException e) {
             throw new RuntimeException(e);
-        } catch (CertificateException e) {
-            throw new RuntimeException(e);
-        } catch (CRLException e) {
+        }catch (Exception e){
             throw new RuntimeException(e);
         }
     }
 
-    public boolean isRevoked(X509Certificate certificate) {
+
+    private X509CRL generateCRLFromFile() throws IOException, CertificateException, CRLException {
+        FileInputStream fis = new FileInputStream(CRL_FILENAME);
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        crl = (X509CRL) cf.generateCRL(fis);
+        fis.close();
+        return crl;
+    }
+
+    public boolean isRevoked(BigInteger serialNumber) {
+        this.loadCRL();
         try {
-            return crl.isRevoked(certificate);
+            X509CRLEntry cert =  crl.getRevokedCertificate(serialNumber);
+            if(cert == null) return false;
+            else return true;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
 
-    public void setCertificateRevocationList(X509CRL crl) {
-        this.crl = crl;
-    }
 
-    public void revokeCertificate(X509Certificate certificate) {
-        crl = addCertificateToCRL(certificate, crl);
-        revokeSignedCertificates(certificate);
-    }
-
-    private void revokeSignedCertificates(X509Certificate certificate) {
-        List<X509Certificate> signedCertificates = getSignedCertificates(certificate);
-        for (X509Certificate signedCertificate : signedCertificates) {
-            crl = addCertificateToCRL(signedCertificate, crl);
-            revokeSignedCertificates(signedCertificate);
-        }
-    }
-
-    private List<X509Certificate> getSignedCertificates(X509Certificate certificate) {
-        List<X509Certificate> signedCertificates = new ArrayList<>();
-        signedCertificates = keyStoreRepository.getCertificatesSignedBy(certificate.getSerialNumber());
-        return signedCertificates;
-    }
-
-    private X509CRL addCertificateToCRL(X509Certificate certificate, X509CRL existingCrl){
+    public void addCertificateToCRL(X509Certificate certificate){
+        this.loadCRL();
         try {
             KeyPair pair =  CertificateUtility.generateKeyPair();
             PrivateKey privateKey  = pair.getPrivate();
-            X509CRLHolder crlHolder = new X509CRLHolder(existingCrl.getEncoded());
+            X509CRLHolder crlHolder = new X509CRLHolder(crl.getEncoded());
 
             X509v2CRLBuilder crlBuilder = new X509v2CRLBuilder(crlHolder);
 
@@ -105,8 +134,8 @@ public class CRLRepository {
             byte[] encodedCrl = newCrlHolder.getEncoded();
             ByteArrayInputStream inputStream = new ByteArrayInputStream(encodedCrl);
             X509CRL newCrl = (X509CRL) cf.generateCRL(inputStream);
-
-            return newCrl;
+            crl =  newCrl;
+            saveCRL();
         } catch (CertificateException | CRLException | IOException | OperatorCreationException e) {
             throw new RuntimeException("Failed to add the certificate to CRL.", e);
         } catch (NoSuchAlgorithmException e) {
@@ -115,4 +144,25 @@ public class CRLRepository {
             throw new RuntimeException(e);
         }
     }
+
+    public void printCRLContents() {
+        Set<? extends X509CRLEntry> entries = crl.getRevokedCertificates();
+        if (entries != null) {
+            for (X509CRLEntry entry : entries) {
+                X500Principal certificateIssuer = crl.getIssuerX500Principal();
+                BigInteger serialNumber = entry.getSerialNumber();
+                Date revocationDate = entry.getRevocationDate();
+                CRLReason reasonCode = entry.getRevocationReason();
+
+                System.out.println("Issuer: " + certificateIssuer);
+                System.out.println("Serial Number: " + serialNumber);
+                System.out.println("Revocation Date: " + revocationDate);
+                System.out.println("Reason Code: " + reasonCode);
+                System.out.println();
+            }
+        } else {
+            System.out.println("No revoked certificates found in the CRL.");
+        }
+    }
+
 }

@@ -56,7 +56,7 @@ public class KeyStoreRepository {
 
 
 
-    private void loadKeyStore(){
+    public void loadKeyStore(){
         if(initialize){
             try {
                 keyStore.load(null, SECRET.toCharArray());
@@ -73,10 +73,10 @@ public class KeyStoreRepository {
         }
     }
 
-    private String getKeyAliasFromSerial(BigInteger id){
+    public String getKeyAliasFromSerial(BigInteger id){
         return "PRIVATE_KEY_" + id;
     }
-    private String getCertificateAliasFromSerial(BigInteger id){
+    public String getCertificateAliasFromSerial(BigInteger id){
         return "CERTIFICATE_" + id;
     }
 
@@ -128,6 +128,10 @@ public class KeyStoreRepository {
             if (keyStore.isCertificateEntry(alias)) {
                 Certificate certificate = keyStore.getCertificate(alias);
                 signedCertificates.addAll(getChildCertificates(certificate));
+                if(signedCertificates.contains(certificate)){
+                    signedCertificates.remove(certificate);
+                    signedCertificates.remove(certificate);
+                }
             }
         } catch (KeyStoreException e) {
             throw new RuntimeException(e);
