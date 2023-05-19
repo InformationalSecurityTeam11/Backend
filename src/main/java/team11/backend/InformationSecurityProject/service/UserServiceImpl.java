@@ -2,17 +2,17 @@ package team11.backend.InformationSecurityProject.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import team11.backend.InformationSecurityProject.dto.PasswordResetDTO;
+import team11.backend.InformationSecurityProject.dto.PasswordResetRequestDTO;
 import team11.backend.InformationSecurityProject.exceptions.BadRequestException;
 import team11.backend.InformationSecurityProject.exceptions.NotFoundException;
 import team11.backend.InformationSecurityProject.model.AccountActivationMethod;
-import team11.backend.InformationSecurityProject.model.PasswordReset;
+import team11.backend.InformationSecurityProject.model.VerificationCode;
 import team11.backend.InformationSecurityProject.model.User;
-import team11.backend.InformationSecurityProject.repository.PasswordResetRepository;
+import team11.backend.InformationSecurityProject.model.VerificationCodeType;
+import team11.backend.InformationSecurityProject.repository.VerificationCodeRepository;
 import team11.backend.InformationSecurityProject.repository.UserRepository;
 import team11.backend.InformationSecurityProject.service.interfaces.MailService;
 import team11.backend.InformationSecurityProject.service.interfaces.UserService;
@@ -26,15 +26,14 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final MailService mailService;
-    private final PasswordResetRepository passwordResetRepository;
-    private final AuthenticationManager authenticationManager;
+    private final VerificationCodeRepository verificationCodeRepository;
+
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, MailService mailService, PasswordResetRepository passwordResetRepository, AuthenticationManager authenticationManager1){
+    public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, MailService mailService, VerificationCodeRepository verificationCodeRepository, AuthenticationManager authenticationManager1){
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.mailService = mailService;
-        this.passwordResetRepository = passwordResetRepository;
-        this.authenticationManager = authenticationManager1;
+        this.verificationCodeRepository = verificationCodeRepository;
     }
 
     @Override
@@ -48,45 +47,58 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String requestPasswordReset(User user, AccountActivationMethod activationMethod){
+    public String requestPasswordReset(PasswordResetRequestDTO passwordResetRequestDTO){
         int durationInMinutes = 15;
-        PasswordReset passwordReset = new PasswordReset(user, Duration.ofMinutes(durationInMinutes));
-        passwordResetRepository.save(passwordReset);
-        mailService.sendPasswordReset(user, passwordReset.getCode(), activationMethod);
-        if(activationMethod == AccountActivationMethod.EMAIL){
+
+        Optional<User> userOpt;
+        if(passwordResetRequestDTO.getPasswordResetMethod() == AccountActivationMethod.EMAIL){
+            userOpt = userRepository.findUserByEmail(passwordResetRequestDTO.getContact());
+            if(userOpt.isEmpty()){
+                throw new BadRequestException("Invalid email address");
+            }
+        }else {
+            userOpt = userRepository.findUserByTelephoneNumber(passwordResetRequestDTO.getContact());
+            if(userOpt.isEmpty()){
+                throw new BadRequestException("Invalid phone number");
+            }
+        }
+        User user = userOpt.get();
+
+        VerificationCode verificationCode = new VerificationCode(user, Duration.ofMinutes(durationInMinutes), VerificationCodeType.PASSWORD_RESET);
+        verificationCodeRepository.save(verificationCode);
+        mailService.sendVerificationCode(passwordResetRequestDTO.getContact(), verificationCode.getCode(), passwordResetRequestDTO.getPasswordResetMethod(), VerificationCodeType.PASSWORD_RESET, "http://localhost:4200/passwordReset");
+
+        if(passwordResetRequestDTO.getPasswordResetMethod() == AccountActivationMethod.EMAIL){
             return "Check your email for reset code";
         }
         return "Message has been sent to your mobile number";
     }
 
     @Override
-    public void resetPassword(PasswordResetDTO passwordResetDTO, Integer resetCode, User user){
-        Optional<PasswordReset> passwordResetInstanceOptional = passwordResetRepository.findById(resetCode);
-        if(passwordResetInstanceOptional.isEmpty()){
+    public void resetPassword(PasswordResetDTO passwordResetDTO, Integer resetCode){
+        Optional<VerificationCode> verificationCodeOptional = verificationCodeRepository.findByCodeAndType(resetCode, VerificationCodeType.PASSWORD_RESET);
+        if(verificationCodeOptional.isEmpty()){
             throw new BadRequestException("Reset code is not valid");
         }
 
-        PasswordReset passwordReset = passwordResetInstanceOptional.get();
-        if(!passwordReset.isApproved(user.getId())){
+        VerificationCode verificationCode = verificationCodeOptional.get();
+        User user = verificationCode.getUser();
+        if(!verificationCode.isValid()){
             throw new BadRequestException("Reset code is not valid");
-        }
-
-        try{
-            this.authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user.getEmail(), passwordResetDTO.getOldPassword()));
-        }catch (AuthenticationException e){
-            throw new BadRequestException("Password is not correct");
         }
 
         if(!passwordResetDTO.getNewPassword().equals(passwordResetDTO.getNewPasswordConfirmation())){
-            throw new BadRequestException("Passwords not matching");
+            throw new BadRequestException("Passwords are not matching");
+        }
+
+        if(user.getOldPasswords().stream().anyMatch(oldPassword -> passwordEncoder.matches(passwordResetDTO.getNewPassword(), oldPassword))){
+            throw new BadRequestException("New password cannot be previous password");
         }
 
         String newPasswordEncoded = passwordEncoder.encode(passwordResetDTO.getNewPassword());
-        String oldPassword = user.getPassword();
         user.setPassword(newPasswordEncoded);
-        user.getOldPasswords().add(oldPassword);
 
         userRepository.save(user);
-        passwordResetRepository.delete(passwordReset);
+        verificationCodeRepository.delete(verificationCode);
     }
 }

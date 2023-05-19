@@ -3,6 +3,7 @@ package team11.backend.InformationSecurityProject.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -43,15 +44,16 @@ public abstract class User implements UserDetails {
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
-
     public void setPassword(String password){
+        if(oldPasswords != null){
+            oldPasswords.add(password);
+        }else {
+            oldPasswords = List.of(password);
+        }
         Timestamp now = new Timestamp((new Date()).getTime());
         this.setLastPasswordResetDate(now);
         this.password = password;
     }
-
-
-
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -77,10 +79,10 @@ public abstract class User implements UserDetails {
     public boolean isCredentialsNonExpired() {
         Calendar cal = Calendar.getInstance();
         cal.setTime(new Date());
-        cal.add(Calendar.DATE, -30);
-        Date dateBefore30Days = cal.getTime();
+        cal.add(Calendar.SECOND, -2592000);
+        Date dateBeforeXDays = cal.getTime();
 
-        return !this.lastPasswordResetDate.before(dateBefore30Days);
+        return !this.lastPasswordResetDate.before(dateBeforeXDays);
     }
 
     @Override

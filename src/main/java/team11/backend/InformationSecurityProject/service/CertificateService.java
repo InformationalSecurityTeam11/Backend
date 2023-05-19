@@ -146,6 +146,16 @@ public class CertificateService implements ICertificateService {
     }
 
     @Override
+    public Optional<Certificate> findCertificateBySerialNumber(BigInteger serial) {
+        return this.certificateRepository.findCertificateBySerialNumber(serial);
+    }
+
+    @Override
+    public List<Certificate> getCertificateByUser(User user) {
+        return this.certificateRepository.getCertificateByUser(user);
+    }
+
+    @Override
     public Set<CertificateInfoDTO> getCertificatesDTOS(List<Certificate> certificates) {
         if(certificates.size() == 0) return null;
         Set<CertificateInfoDTO> certificateInfoDTOS = new HashSet<>();

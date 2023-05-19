@@ -23,8 +23,8 @@ public class TokenUtils {
     @Value("sorcererstone")
     public String SECRET;
 
-    // Period vazenja tokena - 30 minuta
-    @Value("1800000")
+    // Period vazenja tokena - 3 minuta
+    @Value("${app.token-duration}")
     private int ACCESS_TOKEN_EXPIRES_IN;
 
     // Naziv headera kroz koji ce se prosledjivati JWT u komunikaciji server-klijent

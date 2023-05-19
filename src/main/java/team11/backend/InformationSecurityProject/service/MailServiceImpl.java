@@ -12,11 +12,14 @@ import sibModel.SendSmtpEmail;
 import sibModel.SendSmtpEmailTo;
 import team11.backend.InformationSecurityProject.model.AccountActivationMethod;
 import team11.backend.InformationSecurityProject.model.User;
+import team11.backend.InformationSecurityProject.model.VerificationCodeType;
 import team11.backend.InformationSecurityProject.service.interfaces.MailService;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 @Service
 public class MailServiceImpl implements MailService {
@@ -24,81 +27,67 @@ public class MailServiceImpl implements MailService {
     @Value("${spring.sendinblue.api-key}")
     private String API_KEY;
 
-    private User user;
-    private Integer activationCode;
     @Autowired
     public MailServiceImpl(){
     }
-    private void sendActivationEmail(){
-        ApiClient mailClient = Configuration.getDefaultApiClient();
-        mailClient.setApiKey(API_KEY);
 
-        TransactionalEmailsApi apiInstance = new TransactionalEmailsApi();
-        SendSmtpEmail email = new SendSmtpEmail();
-        SendSmtpEmailTo receiver = (new SendSmtpEmailTo()).email(user.getEmail());
-
-        email.setTo(List.of(receiver));
-        Map<String, String> params = new HashMap<>();
-        params.put("ACTIVATION_URL", "http://localhost:4200/accountActivation&code=" + activationCode.toString());
-        params.put("ACTIVATION_CODE", activationCode.toString());
-
-        email.params(params);
-        email.templateId(1L);
-        try {
-            CreateSmtpEmail result = apiInstance.sendTransacEmail(email);
-        } catch (ApiException e) {
-            System.out.println(e.getMessage());
-            throw new RuntimeException(e);
-        }
-    }
-    private void sendActivationMessage(){
+    private void sendAccountActivationMessage(String phoneNumber){
         // TODO send activation code using WhatsApp or SMS
     }
-
-    private void sendPasswordResetEmail(){
+    private void sendPasswordResetMessage(String phoneNumber){
+        // TODO send password reset code using WhatsApp or SMS
+    }
+    private void sendLoginConfirmationMessage(String phoneNumber){
+        // TODO send login confirmation code using WhatsApp or SMS
+    }
+    private void sendEmail(String email, long templateID, Integer verificationCode, String url){
         ApiClient mailClient = Configuration.getDefaultApiClient();
         mailClient.setApiKey(API_KEY);
 
         TransactionalEmailsApi apiInstance = new TransactionalEmailsApi();
-        SendSmtpEmail email = new SendSmtpEmail();
-        SendSmtpEmailTo receiver = (new SendSmtpEmailTo()).email(user.getEmail());
+        SendSmtpEmail emailSender = new SendSmtpEmail();
+        SendSmtpEmailTo receiver = (new SendSmtpEmailTo()).email(email);
 
-        email.setTo(List.of(receiver));
+        emailSender.setTo(List.of(receiver));
         Map<String, String> params = new HashMap<>();
-        params.put("RESET_URL", "http://localhost:4200/passwordReset&code=" + activationCode.toString());
-        params.put("RESET_CODE", activationCode.toString());
+        params.put("VERIFICATION_URL", url + "?code=" + verificationCode.toString());
+        params.put("VERIFICATION_CODE", verificationCode.toString());
 
-        email.params(params);
-        email.templateId(3L);
+        emailSender.params(params);
+        emailSender.templateId(templateID);
         try {
-            CreateSmtpEmail result = apiInstance.sendTransacEmail(email);
+            apiInstance.sendTransacEmail(emailSender);
         } catch (ApiException e) {
             System.out.println(e.getMessage());
             throw new RuntimeException(e);
         }
     }
 
-    private void sendPasswordResetMessage(){
-        // TODO send password reset code using WhatsApp or SMS
-    }
     @Override
-    public void sendPasswordReset(User user, Integer activationCode, AccountActivationMethod method){
-        this.user = user;
-        this.activationCode = activationCode;
+    public void sendVerificationCode(String contact, Integer verificationCode, AccountActivationMethod method, VerificationCodeType type, String url) {
+        long templateID;
+        Consumer<String> messageSender;
+        if(type == VerificationCodeType.LOGIN){
+            templateID = 4;
+            messageSender = this::sendLoginConfirmationMessage;
+        } else {
+            templateID = 3;
+            messageSender = this::sendPasswordResetMessage;
+        }
+
         if(method == AccountActivationMethod.EMAIL){
-            sendPasswordResetEmail();
+            sendEmail(contact, templateID, verificationCode, url);
         }else {
-            sendPasswordResetMessage();
+            messageSender.accept(contact);
         }
     }
+
     @Override
-    public void sendActivation(User user, Integer activationCode, AccountActivationMethod method) {
-        this.user = user;
-        this.activationCode = activationCode;
+    public void sendActivation(User user, Integer activationCode, AccountActivationMethod method, String url) {
         if(method == AccountActivationMethod.EMAIL){
-            sendActivationEmail();
+            sendEmail(user.getEmail(),1, activationCode, url);
         }else {
-            sendActivationMessage();
+            sendAccountActivationMessage(user.getTelephoneNumber());
         }
     }
 }

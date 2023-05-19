@@ -10,4 +10,6 @@ import team11.backend.InformationSecurityProject.model.AccountActivationMethod;
 public class PasswordResetRequestDTO {
     @NotNull(message = "Field (passwordResetMethod) is required")
     private AccountActivationMethod passwordResetMethod;
+    @NotNull(message = "Field (contact) is required")   // This field contains email or phone number depending on method
+    private String contact;
 }

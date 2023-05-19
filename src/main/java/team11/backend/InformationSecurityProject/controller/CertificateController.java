@@ -7,6 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import team11.backend.InformationSecurityProject.dto.*;
@@ -15,6 +17,7 @@ import team11.backend.InformationSecurityProject.exceptions.ForbiddenException;
 import team11.backend.InformationSecurityProject.exceptions.NotFoundException;
 import team11.backend.InformationSecurityProject.model.Certificate;
 import team11.backend.InformationSecurityProject.model.CertificateRequest;
+import team11.backend.InformationSecurityProject.model.User;
 import team11.backend.InformationSecurityProject.service.CertificatePreviewServiceImpl;
 import team11.backend.InformationSecurityProject.service.KeyStoreService;
 import team11.backend.InformationSecurityProject.service.interfaces.CertificatePreviewService;
@@ -73,6 +76,20 @@ public class CertificateController {
         return new ResponseEntity<>(this.certificateService.getCertificatesDTOS(certificates), HttpStatus.OK);
     }
 
+
+    @GetMapping(
+            value = "/own",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<Set<CertificateInfoDTO>> getOwnCertificates() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) auth.getPrincipal();
+        List<Certificate> certificates = this.certificateService.getCertificateByUser(user);
+        return new ResponseEntity<>(this.certificateService.getCertificatesDTOS(certificates), HttpStatus.OK);
+    }
+
+
     @PostMapping(
             value = "/validate",
             consumes = MediaType.APPLICATION_JSON_VALUE
@@ -114,10 +131,10 @@ public class CertificateController {
     }
 
 
-    @GetMapping(value = "/download/{id}")
+    @GetMapping(value = "/download/{serial}")
     @PreAuthorize("hasAnyRole('STANDARD', 'ADMIN')")
-    public ResponseEntity<?> downloadCertificate(@PathVariable Integer id) throws CertificateEncodingException, IOException {
-        Certificate certificateInfo =  this.certificateService.getById(id);
+    public ResponseEntity<?> downloadCertificate(@PathVariable BigInteger serial) throws CertificateEncodingException, IOException {
+        Certificate certificateInfo =  this.certificateService.findCertificateBySerialNumber(serial).orElse(null);
         if (certificateInfo == null) {
             return new ResponseEntity<>("Certificate not found", HttpStatus.OK);
 
