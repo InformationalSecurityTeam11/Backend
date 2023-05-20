@@ -13,12 +13,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import team11.backend.InformationSecurityProject.dto.CertificateInfoDTO;
+import team11.backend.InformationSecurityProject.dto.RevokeDTO;
 import team11.backend.InformationSecurityProject.exceptions.ForbiddenException;
 import team11.backend.InformationSecurityProject.exceptions.NotFoundException;
 import team11.backend.InformationSecurityProject.model.Certificate;
+import team11.backend.InformationSecurityProject.model.CertificateRevoke;
 import team11.backend.InformationSecurityProject.model.User;
 import team11.backend.InformationSecurityProject.repository.CRLRepository;
 import team11.backend.InformationSecurityProject.repository.CertificateRepository;
+import team11.backend.InformationSecurityProject.repository.CertificateRevokeRepository;
 import team11.backend.InformationSecurityProject.repository.KeyStoreRepository;
 import team11.backend.InformationSecurityProject.service.interfaces.CertificatePreviewService;
 import team11.backend.InformationSecurityProject.service.interfaces.ICertificateService;
@@ -39,13 +42,15 @@ public class CertificateService implements ICertificateService {
     private final KeyStoreRepository keyStoreRepository;
     private final CertificateUtility certificateUtility;
     private final  CRLRepository crlRepository;
+    private final CertificateRevokeRepository certificateRevokeRepository;
 
 
-    public CertificateService(CertificateRepository certificateRepository, CRLRepository crlRepository, KeyStoreRepository keyStoreRepository, CertificateUtility certificateUtility, CertificatePreviewService certificatePreviewService) {
+    public CertificateService(CertificateRepository certificateRepository, CRLRepository crlRepository, KeyStoreRepository keyStoreRepository, CertificateUtility certificateUtility, CertificatePreviewService certificatePreviewService, CertificateRevokeRepository certificateRevokeRepository) {
         this.certificateRepository = certificateRepository;
         this.crlRepository = crlRepository;
         this.keyStoreRepository = keyStoreRepository;
         this.certificateUtility = certificateUtility;
+        this.certificateRevokeRepository = certificateRevokeRepository;
     }
 
     /**
@@ -176,26 +181,34 @@ public class CertificateService implements ICertificateService {
 
 
     @Override
-    public boolean revoke(BigInteger serialNumber) {
+    public boolean revoke(RevokeDTO revokeDTO) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User user = (User) auth.getPrincipal();
-        X509Certificate certificate = getCertificate(serialNumber);
-        Optional<Certificate> foundCert = certificateRepository.findCertificateBySerialNumber(serialNumber);
+        X509Certificate certificate = getCertificate(revokeDTO.getSerialNumber());
+        Optional<Certificate> foundCert = certificateRepository.findCertificateBySerialNumber(revokeDTO.getSerialNumber());
         if(foundCert.isEmpty()){
             throw new NotFoundException("No certificate with that id has been found");
         }else if(foundCert.get().getUser().getId() != user.getId() && !user.getUserType().equals("ADMIN")){
             throw new ForbiddenException("You are not the owner of this certificate");
         };
+        CertificateRevoke certificateRevoke = new CertificateRevoke();
+        certificateRevoke.setReason(revokeDTO.getReason());
+        foundCert.get().setRevoke(certificateRevoke);
+        this.certificateRevokeRepository.save(certificateRevoke);
+        this.certificateRepository.save(foundCert.get());
         crlRepository.addCertificateToCRL(certificate);
-        revokeSignedCertificates(certificate);
+        revokeSignedCertificates(certificate, certificateRevoke);
         return true;
     }
 
-    private void revokeSignedCertificates(X509Certificate certificate) {
+    private void revokeSignedCertificates(X509Certificate certificate, CertificateRevoke certificateRevoke) {
         List<X509Certificate> signedCertificates = getSignedCertificates(certificate);
         for (X509Certificate signedCertificate : signedCertificates) {
             this.crlRepository.addCertificateToCRL(signedCertificate);
-            revokeSignedCertificates(signedCertificate);
+            Optional<Certificate> foundCert = certificateRepository.findCertificateBySerialNumber(signedCertificate.getSerialNumber());
+            foundCert.get().setRevoke(certificateRevoke);
+            this.certificateRepository.save(foundCert.get());
+            revokeSignedCertificates(signedCertificate, certificateRevoke);
         }
     }
 
