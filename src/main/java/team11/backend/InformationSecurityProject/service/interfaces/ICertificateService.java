@@ -21,4 +21,9 @@ public interface ICertificateService {
     Optional<Certificate> findCertificateBySerialNumber(BigInteger serial);
     List<Certificate> getCertificateByUser(User user);
     Set<CertificateInfoDTO> getCertificatesDTOS(List<Certificate> certificates);
+    public boolean isRevoked(BigInteger serialNumber);
+    public boolean revoke(BigInteger serialNumber);
+    public X509Certificate getCertificate(BigInteger serialNumber);
+
+    public void test();
 }

@@ -1,6 +1,9 @@
 package team11.backend.InformationSecurityProject.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import team11.backend.InformationSecurityProject.exceptions.NotFoundException;
+import team11.backend.InformationSecurityProject.repository.CRLRepository;
 import team11.backend.InformationSecurityProject.repository.KeyStoreRepository;
 
 import java.io.*;
@@ -19,7 +22,8 @@ public class KeyStoreService {
 
     private final KeyStoreRepository keyStoreRepository;
 
-    public KeyStoreService(KeyStoreRepository keyStoreRepository) {
+    public KeyStoreService(KeyStoreRepository keyStoreRepository)
+    {
         this.keyStoreRepository = keyStoreRepository;
     }
 
@@ -73,13 +77,15 @@ public class KeyStoreService {
         keystore.setCertificateEntry(alias, certificate);
     }
 
-    public X509Certificate getCertificateFromKeyStore(KeyStore keystore, String alias) throws Exception {
-        if (!keystore.containsAlias(alias)) {
-            throw new Exception("Certificate with alias " + alias + " not found in keystore");
+    public X509Certificate getCertificateFromKeystore(BigInteger id) throws NotFoundException{
+        Optional<Certificate> certResponse = this.keyStoreRepository.getCertificate(id);
+        if(certResponse.isEmpty()){
+            throw new NotFoundException("No certificate with that id has been found");
         }
-
-        return (X509Certificate) keystore.getCertificate(alias);
+        X509Certificate certificate = (X509Certificate) certResponse.get();
+        return certificate;
     }
+
 
     public void deleteEntryFromKeyStore(KeyStore keyStore, String alias) throws KeyStoreException {
         keyStore.deleteEntry(alias);

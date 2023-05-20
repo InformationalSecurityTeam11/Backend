@@ -9,10 +9,15 @@ import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import team11.backend.InformationSecurityProject.dto.CertificateInfoDTO;
+import team11.backend.InformationSecurityProject.exceptions.ForbiddenException;
+import team11.backend.InformationSecurityProject.exceptions.NotFoundException;
 import team11.backend.InformationSecurityProject.model.Certificate;
 import team11.backend.InformationSecurityProject.model.User;
+import team11.backend.InformationSecurityProject.repository.CRLRepository;
 import team11.backend.InformationSecurityProject.repository.CertificateRepository;
 import team11.backend.InformationSecurityProject.repository.KeyStoreRepository;
 import team11.backend.InformationSecurityProject.service.interfaces.CertificatePreviewService;
@@ -21,6 +26,8 @@ import team11.backend.InformationSecurityProject.utils.CertificateUtility;
 
 import java.math.BigInteger;
 import java.security.*;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -31,9 +38,12 @@ public class CertificateService implements ICertificateService {
     private final CertificateRepository certificateRepository;
     private final KeyStoreRepository keyStoreRepository;
     private final CertificateUtility certificateUtility;
+    private final  CRLRepository crlRepository;
 
-    public CertificateService(CertificateRepository certificateRepository, KeyStoreRepository keyStoreRepository, CertificateUtility certificateUtility, CertificatePreviewService certificatePreviewService) {
+
+    public CertificateService(CertificateRepository certificateRepository, CRLRepository crlRepository, KeyStoreRepository keyStoreRepository, CertificateUtility certificateUtility, CertificatePreviewService certificatePreviewService) {
         this.certificateRepository = certificateRepository;
+        this.crlRepository = crlRepository;
         this.keyStoreRepository = keyStoreRepository;
         this.certificateUtility = certificateUtility;
     }
@@ -114,7 +124,7 @@ public class CertificateService implements ICertificateService {
         certificate.checkValidity();
 
         // Check if the certificate has been revoked
-        if (isCertificateRevoked(certificate)) {
+        if (isRevoked(certificate.getSerialNumber())) {
             throw new Exception("Certificate has been revoked");
         }
 
@@ -156,12 +166,90 @@ public class CertificateService implements ICertificateService {
 
     }
 
-    private boolean isCertificateRevoked(X509Certificate certificate) {
-        // TODO: Implement certificate revocation check logic
-        // This could involve checking a Certificate Revocation List (CRL),
-        // an Online Certificate Status Protocol (OCSP) server, or some other method.
-        // For simplicity, we will assume that the certificate is not revoked.
-        return false;
+    @Override
+    public boolean isRevoked(BigInteger serialNumber) {
+        if(certificateRepository.findCertificateBySerialNumber(serialNumber).isEmpty()){
+            throw new NotFoundException("No certificate with that id has been found");
+        }
+        return this.crlRepository.isRevoked(serialNumber);
     }
+
+
+    @Override
+    public boolean revoke(BigInteger serialNumber) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) auth.getPrincipal();
+        X509Certificate certificate = getCertificate(serialNumber);
+        Optional<Certificate> foundCert = certificateRepository.findCertificateBySerialNumber(serialNumber);
+        if(foundCert.isEmpty()){
+            throw new NotFoundException("No certificate with that id has been found");
+        }else if(foundCert.get().getUser().getId() != user.getId() && !user.getUserType().equals("ADMIN")){
+            throw new ForbiddenException("You are not the owner of this certificate");
+        };
+        crlRepository.addCertificateToCRL(certificate);
+        revokeSignedCertificates(certificate);
+        return true;
+    }
+
+    private void revokeSignedCertificates(X509Certificate certificate) {
+        List<X509Certificate> signedCertificates = getSignedCertificates(certificate);
+        for (X509Certificate signedCertificate : signedCertificates) {
+            this.crlRepository.addCertificateToCRL(signedCertificate);
+            revokeSignedCertificates(signedCertificate);
+        }
+    }
+
+    private List<X509Certificate> getSignedCertificates(X509Certificate certificate) {
+        List<X509Certificate> signedCertificates = new ArrayList<>();
+        signedCertificates = keyStoreRepository.getCertificatesSignedBy(certificate.getSerialNumber());
+        System.out.println(signedCertificates);
+        return signedCertificates;
+    }
+
+    @Override
+    public X509Certificate getCertificate(BigInteger serialNumber) {
+        Optional<java.security.cert.Certificate> certResponse = this.keyStoreRepository.getCertificate(serialNumber);
+        if(certResponse.isEmpty()){
+            throw new NotFoundException("No certificate with that id has been found");
+        }
+        X509Certificate certificate = (X509Certificate) certResponse.get();
+        return  certificate;
+    }
+
+    public void test(){
+        this.crlRepository.loadCRL();
+    }
+
+    public void printCertificateContents(X509Certificate certificate) {
+        System.out.println("Subject: " + certificate.getSubjectDN());
+        System.out.println("Issuer: " + certificate.getIssuerDN());
+        System.out.println("Serial Number: " + certificate.getSerialNumber());
+        System.out.println("Validity Period: " + certificate.getNotBefore() + " - " + certificate.getNotAfter());
+
+        try {
+            Collection<List<?>> subjectAltNames = certificate.getSubjectAlternativeNames();
+            if (subjectAltNames != null) {
+                System.out.println("Subject Alternative Names:");
+                for (List<?> altName : subjectAltNames) {
+                    System.out.println(altName);
+                }
+            }
+        } catch (CertificateParsingException e) {
+            System.out.println("Failed to retrieve Subject Alternative Names: " + e.getMessage());
+        }
+
+        try {
+            byte[] encodedCertificate = certificate.getEncoded();
+            System.out.println("Encoded Certificate: " + encodedCertificate);
+        } catch (CertificateEncodingException e) {
+            System.out.println("Failed to retrieve encoded certificate: " + e.getMessage());
+        }
+    }
+
+
+
+
+
+
 
 }

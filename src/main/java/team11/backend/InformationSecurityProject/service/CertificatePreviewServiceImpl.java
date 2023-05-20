@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import team11.backend.InformationSecurityProject.exceptions.NotFoundException;
 import team11.backend.InformationSecurityProject.model.Certificate;
+import team11.backend.InformationSecurityProject.repository.CRLRepository;
 import team11.backend.InformationSecurityProject.repository.CertificateRepository;
 import team11.backend.InformationSecurityProject.service.interfaces.CertificatePreviewService;
 
@@ -72,4 +73,5 @@ public class CertificatePreviewServiceImpl implements CertificatePreviewService 
             return false;
         }
     }
+
 }

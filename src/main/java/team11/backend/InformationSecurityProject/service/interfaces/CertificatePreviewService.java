@@ -5,6 +5,7 @@ import team11.backend.InformationSecurityProject.service.CertificatePreviewServi
 
 import java.io.InputStream;
 import java.math.BigInteger;
+import java.security.cert.X509Certificate;
 
 public interface CertificatePreviewService {
     Certificate insert(Certificate certificate);
@@ -25,4 +26,5 @@ public interface CertificatePreviewService {
             this.certificate = certificate;
         }
     }
+
 }

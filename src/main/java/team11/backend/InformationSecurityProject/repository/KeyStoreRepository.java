@@ -1,6 +1,8 @@
 package team11.backend.InformationSecurityProject.repository;
 
 import org.springframework.stereotype.Repository;
+import java.security.cert.X509Certificate;
+import java.util.Enumeration;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -10,6 +12,8 @@ import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -49,7 +53,10 @@ public class KeyStoreRepository {
         return Optional.empty();
     }
 
-    private void loadKeyStore(){
+
+
+
+    public void loadKeyStore(){
         if(initialize){
             try {
                 keyStore.load(null, SECRET.toCharArray());
@@ -66,10 +73,10 @@ public class KeyStoreRepository {
         }
     }
 
-    private String getKeyAliasFromSerial(BigInteger id){
+    public String getKeyAliasFromSerial(BigInteger id){
         return "PRIVATE_KEY_" + id;
     }
-    private String getCertificateAliasFromSerial(BigInteger id){
+    public String getCertificateAliasFromSerial(BigInteger id){
         return "CERTIFICATE_" + id;
     }
 
@@ -111,4 +118,58 @@ public class KeyStoreRepository {
         }
         saveKeyStore();
     }
+
+    public List<X509Certificate> getCertificatesSignedBy(BigInteger certificateSerial) {
+        loadKeyStore();
+        String alias = getCertificateAliasFromSerial(certificateSerial);
+        List<X509Certificate> signedCertificates = new ArrayList<>();
+
+        try {
+            if (keyStore.isCertificateEntry(alias)) {
+                Certificate certificate = keyStore.getCertificate(alias);
+                signedCertificates.addAll(getChildCertificates(certificate));
+                if(signedCertificates.contains(certificate)){
+                    signedCertificates.remove(certificate);
+                    signedCertificates.remove(certificate);
+                }
+            }
+        } catch (KeyStoreException e) {
+            throw new RuntimeException(e);
+        }
+
+        return signedCertificates;
+    }
+    private List<X509Certificate> getChildCertificates(Certificate parentCertificate) {
+        List<X509Certificate> childCertificates = new ArrayList<>();
+
+        try {
+            Enumeration<String> aliases = keyStore.aliases();
+            while (aliases.hasMoreElements()) {
+                String alias = aliases.nextElement();
+                Certificate certificate = keyStore.getCertificate(alias);
+
+                if (certificate instanceof X509Certificate) {
+                    X509Certificate x509Certificate = (X509Certificate) certificate;
+
+                    if (isCertificateSignedBy(x509Certificate, parentCertificate)) {
+                        childCertificates.add(x509Certificate);
+                    }
+                }
+            }
+        } catch (KeyStoreException e) {
+            throw new RuntimeException(e);
+        }
+
+        return childCertificates;
+    }
+
+    private boolean isCertificateSignedBy(X509Certificate certificate, Certificate parentCertificate) {
+        try {
+            certificate.verify(parentCertificate.getPublicKey());
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
 }
