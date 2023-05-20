@@ -33,4 +33,8 @@ public class Certificate {
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false)
     private CertificateType type;
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REFRESH)
+    @JoinColumn(name = "Revoke", nullable = true)
+    private CertificateRevoke revoke;
 }
