@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import team11.backend.InformationSecurityProject.model.CertificateRequest;
 import team11.backend.InformationSecurityProject.model.RequestState;
+import team11.backend.InformationSecurityProject.model.User;
 
 import java.math.BigInteger;
 import java.time.format.DateTimeFormatter;
@@ -17,18 +18,23 @@ public class RequestInfoDTO {
     private String creationTime;
     private RequestState requestState;
     private String acceptanceTime;
-    private Integer ownerId;
-    private BigInteger linkedCertificateSerialNumber;
+    private UserOut owner;
     private String certificateType;
+    private String rejection;
+    private String organization;
+    private String organizationUnit;
 
-    public RequestInfoDTO(CertificateRequest certificateRequest) {
+    public RequestInfoDTO(CertificateRequest certificateRequest, User user) {
         this.id = certificateRequest.getId();
         this.parentCertificateSerialNumber = certificateRequest.getParent() == null ? null : certificateRequest.getParent().getSerialNumber();
         this.creationTime = certificateRequest.getCreationTime().format(DateTimeFormatter.ISO_DATE_TIME);
         this.requestState = certificateRequest.getRequestState();
         this.acceptanceTime = certificateRequest.getAcceptanceTime() == null ? null : certificateRequest.getAcceptanceTime().format(DateTimeFormatter.ISO_DATE_TIME);
-        this.ownerId = certificateRequest.getOwner().getId();
-        this.linkedCertificateSerialNumber = certificateRequest.getLinkedCertificate() == null ? null : certificateRequest.getLinkedCertificate().getSerialNumber();
         this.certificateType = certificateRequest.getCertificateType().toString();
+        this.rejection = certificateRequest.getRejection_reason();
+        this.owner = new UserOut(user);
+        this.organization = certificateRequest.getOrganization();
+        this.organizationUnit = certificateRequest.getOrganizationUnit();
+
     }
 }

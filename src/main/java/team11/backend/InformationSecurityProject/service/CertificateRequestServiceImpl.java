@@ -8,7 +8,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import team11.backend.InformationSecurityProject.dto.CertificateInfoDTO;
 import team11.backend.InformationSecurityProject.dto.CertificateRequestIn;
 import team11.backend.InformationSecurityProject.dto.RequestInfoDTO;
 import team11.backend.InformationSecurityProject.exceptions.BadRequestException;
@@ -16,6 +15,7 @@ import team11.backend.InformationSecurityProject.exceptions.ForbiddenException;
 import team11.backend.InformationSecurityProject.exceptions.NotFoundException;
 import team11.backend.InformationSecurityProject.model.*;
 import team11.backend.InformationSecurityProject.repository.CertificateRequestRepository;
+import team11.backend.InformationSecurityProject.repository.UserRepository;
 import team11.backend.InformationSecurityProject.service.interfaces.CertificatePreviewService;
 import team11.backend.InformationSecurityProject.service.interfaces.CertificateRequestService;
 import team11.backend.InformationSecurityProject.service.interfaces.ICertificateService;
@@ -32,14 +32,16 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
     private final CertificateRequestRepository certificateRequestRepository;
     private final CertificatePreviewService certificatePreviewService;
     private final ICertificateService certificateService;
+    private final UserRepository userRepository;
 
 
     @Autowired
-    public CertificateRequestServiceImpl(CertificateRequestRepository certificateRequestRepository, CertificatePreviewService certificatePreviewService, ICertificateService certificateService){
+    public CertificateRequestServiceImpl(CertificateRequestRepository certificateRequestRepository, CertificatePreviewService certificatePreviewService, ICertificateService certificateService, UserRepository userRepository){
 
         this.certificateRequestRepository = certificateRequestRepository;
         this.certificatePreviewService = certificatePreviewService;
         this.certificateService = certificateService;
+        this.userRepository = userRepository;
     }
 
     private X500Name generateX500Name(String name, String surname, String email, String userID, @Nullable String organization,@Nullable String orgUnit){
@@ -140,10 +142,25 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
         if(requests.size() == 0) return null;
         Set<RequestInfoDTO> certificateRequests = new HashSet<>();
         for(CertificateRequest r : requests){
-            certificateRequests.add(new RequestInfoDTO(r));
+            certificateRequests.add(new RequestInfoDTO(r, r.getOwner()));
         }
         return certificateRequests;
 
+    }
+
+    @Override
+    public List<CertificateRequest> getPendingRequestsForSpecificUser(User user) {
+        ArrayList<CertificateRequest> certificateRequests = new ArrayList<>();
+        for (CertificateRequest request : this.certificateRequestRepository.findAll()) {
+            if (request.getParent() == null)
+                continue;
+            if (request.getRequestState() != RequestState.PENDING )
+                continue;
+            if (Objects.equals(request.getParent().getUser().getId(), user.getId())) {
+                certificateRequests.add(request);
+            }
+        }
+        return certificateRequests;
     }
 
     @Override
@@ -232,7 +249,8 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
 
     @Override
     public List<CertificateRequest> getCertificateRequestByOwner(User owner) {
-        return this.certificateRequestRepository.getCertificateRequestByOwner(owner);
+        User user = this.userRepository.findUserByEmail(owner.getEmail()).orElse(null);
+        return this.certificateRequestRepository.getCertificateRequestByOwner(user);
     }
 
 }
