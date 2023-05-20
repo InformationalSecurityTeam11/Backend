@@ -229,6 +229,11 @@ public class CertificateService implements ICertificateService {
         return  certificate;
     }
 
+    @Override
+    public PrivateKey getPrivateKey(BigInteger serial) {
+        return this.keyStoreRepository.getPrivateKey(serial);
+    }
+
     public void test(){
         this.crlRepository.loadCRL();
     }

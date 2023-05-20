@@ -7,6 +7,7 @@ import team11.backend.InformationSecurityProject.model.Certificate;
 import team11.backend.InformationSecurityProject.model.User;
 
 import java.math.BigInteger;
+import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +26,6 @@ public interface ICertificateService {
     public boolean isRevoked(BigInteger serialNumber);
     public boolean revoke(RevokeDTO revokeDTO);
     public X509Certificate getCertificate(BigInteger serialNumber);
-
+    PrivateKey getPrivateKey(BigInteger serial);
     public void test();
 }

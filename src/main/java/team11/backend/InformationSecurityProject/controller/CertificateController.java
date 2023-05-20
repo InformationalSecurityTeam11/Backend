@@ -3,6 +3,7 @@ package team11.backend.InformationSecurityProject.controller;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +27,11 @@ import team11.backend.InformationSecurityProject.service.interfaces.ICertificate
 import team11.backend.InformationSecurityProject.utils.CertificateUtility;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.security.PrivateKey;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import org.springframework.http.HttpHeaders;
@@ -172,6 +177,34 @@ public class CertificateController {
         headers.setContentDispositionFormData("attachment", "certificate.cer");
         headers.setContentLength(fileData.length);
         return new ResponseEntity<byte[]>(fileData, headers, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/download/privateKey/{serial}")
+    @PreAuthorize("hasAnyRole('STANDARD', 'ADMIN')")
+    public ResponseEntity<?> downloadPrivateKey(@PathVariable BigInteger serial) throws IOException {
+        Certificate certificateInfo =  this.certificateService.findCertificateBySerialNumber(serial).orElse(null);
+        if (certificateInfo == null) {
+            return new ResponseEntity<>("Certificate not found", HttpStatus.OK);
+        }
+        PrivateKey privateKey = this.certificateService.getPrivateKey(serial);
+        String privateKeyBase64 = Base64.getEncoder().encodeToString(privateKey.getEncoded());
+
+        File privateKeyFile = File.createTempFile("privateKey", ".pem");
+
+        try (FileOutputStream fos = new FileOutputStream(privateKeyFile)) {
+            fos.write(privateKeyBase64.getBytes());
+        }
+
+
+        FileSystemResource fileResource = new FileSystemResource(privateKeyFile);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "privateKey.pem"); // Zamijenite ekstenzijom datoteke prema potrebi
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(fileResource);
     }
 
     @PostMapping("/verify/upload")
