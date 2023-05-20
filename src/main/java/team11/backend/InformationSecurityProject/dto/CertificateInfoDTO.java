@@ -21,11 +21,13 @@ public class CertificateInfoDTO {
     private String expireDate;
     private CertificateType type;
     private BigInteger serialNumber;
+    private String revokingReason;
     public CertificateInfoDTO(Certificate certificate) {
         this.ownerInfo = new UserInfoDTO(certificate.getUser());
         this.startDate = certificate.getStartDate().format(DateTimeFormatter.ISO_DATE_TIME);
         this.expireDate = certificate.getExpireDate().format(DateTimeFormatter.ISO_DATE_TIME);
         this.serialNumber = certificate.getSerialNumber();
         this.type = certificate.getType();
+        this.revokingReason = certificate.getRevoke() == null ? null : certificate.getRevoke().getReason();
     }
 }

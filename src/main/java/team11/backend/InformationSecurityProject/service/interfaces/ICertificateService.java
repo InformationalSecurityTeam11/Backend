@@ -2,6 +2,7 @@ package team11.backend.InformationSecurityProject.service.interfaces;
 
 import org.bouncycastle.asn1.x500.X500Name;
 import team11.backend.InformationSecurityProject.dto.CertificateInfoDTO;
+import team11.backend.InformationSecurityProject.dto.RevokeDTO;
 import team11.backend.InformationSecurityProject.model.Certificate;
 import team11.backend.InformationSecurityProject.model.User;
 
@@ -22,7 +23,7 @@ public interface ICertificateService {
     List<Certificate> getCertificateByUser(User user);
     Set<CertificateInfoDTO> getCertificatesDTOS(List<Certificate> certificates);
     public boolean isRevoked(BigInteger serialNumber);
-    public boolean revoke(BigInteger serialNumber);
+    public boolean revoke(RevokeDTO revokeDTO);
     public X509Certificate getCertificate(BigInteger serialNumber);
 
     public void test();

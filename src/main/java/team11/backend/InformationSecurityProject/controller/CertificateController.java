@@ -193,9 +193,9 @@ public class CertificateController {
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
     @PreAuthorize("hasAnyRole('STANDARD', 'ADMIN')")
-    public ResponseEntity<String> revokeCertificate(@RequestParam("serialNumber") BigInteger serialNumber) {
+    public ResponseEntity<String> revokeCertificate(@RequestBody @Valid RevokeDTO revokeDTO) {
         try{
-            boolean isRevoked = certificateService.revoke(serialNumber);
+            boolean isRevoked = certificateService.revoke(revokeDTO);
             if (isRevoked) {
                 return ResponseEntity.ok("Certificate has been revoked");
             }
