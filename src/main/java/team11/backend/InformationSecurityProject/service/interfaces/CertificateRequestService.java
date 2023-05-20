@@ -16,5 +16,7 @@ public interface CertificateRequestService {
     void approve(int id);
     void reject(int id, String reason);
     List<CertificateRequest> getCertificateRequestByOwner(User owner);
-     Set<RequestInfoDTO> getRequestsDTOS(List<CertificateRequest> requests);
+    Set<RequestInfoDTO> getRequestsDTOS(List<CertificateRequest> requests);
+    List<CertificateRequest> getPendingRequestsForSpecificUser(User user);
+
 }

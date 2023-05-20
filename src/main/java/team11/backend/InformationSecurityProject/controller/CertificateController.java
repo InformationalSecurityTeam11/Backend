@@ -122,12 +122,33 @@ public class CertificateController {
     }
 
     @GetMapping(value = "/requests")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STANDARD')")
     public ResponseEntity<Set<RequestInfoDTO>> getAllRequests() {
-        List<CertificateRequest> requests = this.certificateRequestService.getAll();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) auth.getPrincipal();
+        List<CertificateRequest> requests;
+
+        if (user.getUserType().equals("ADMIN"))
+            requests = this.certificateRequestService.getAll();
+        else requests = this.certificateRequestService.getCertificateRequestByOwner(user);
         return new ResponseEntity<>(this.certificateRequestService.getRequestsDTOS(requests), HttpStatus.OK);
 
+
     }
+
+    @GetMapping(value = "/pendingRequests")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STANDARD')")
+    public ResponseEntity<Set<RequestInfoDTO>> getPendingRequests() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) auth.getPrincipal();
+        List<CertificateRequest> requests;
+        requests = this.certificateRequestService.getPendingRequestsForSpecificUser(user);
+        return new ResponseEntity<>(this.certificateRequestService.getRequestsDTOS(requests), HttpStatus.OK);
+
+
+    }
+
+
 
 
     @GetMapping(value = "/download/{serial}")
