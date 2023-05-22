@@ -50,7 +50,6 @@ public class MailServiceImpl implements MailService {
 
         emailSender.setTo(List.of(receiver));
         Map<String, String> params = new HashMap<>();
-        params.put("VERIFICATION_URL", url + "?code=" + verificationCode.toString());
         params.put("VERIFICATION_CODE", verificationCode.toString());
 
         emailSender.params(params);
