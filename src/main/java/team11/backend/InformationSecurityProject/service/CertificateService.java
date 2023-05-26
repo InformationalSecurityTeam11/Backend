@@ -113,6 +113,9 @@ public class CertificateService implements ICertificateService {
         X509Certificate cert = new JcaX509CertificateConverter().getCertificate(certHolder);
 
         keyStoreRepository.saveCertificate(cert, serialNumber);
+        System.out.println("ALIAS:\n");
+        System.out.println(this.keyStoreRepository.getCertificateAliasFromSerial(serialNumber));
+
         keyStoreRepository.savePrivateKey(serialNumber, keyPairIssuer.getPrivate());
 
         return cert;
