@@ -198,26 +198,6 @@ public class CertificateController {
         headers.setContentDispositionFormData("attachment", "privateKey.pem");
         headers.setContentLength(fileData.length);
         return new ResponseEntity<byte[]>(fileData, headers, HttpStatus.OK);
-
-
-//        String privateKeyBase64 = Base64.getEncoder().encodeToString(privateKey.getEncoded());
-//
-//        File privateKeyFile = File.createTempFile("privateKey", ".pem");
-//
-//        try (FileOutputStream fos = new FileOutputStream(privateKeyFile)) {
-//            fos.write(privateKeyBase64.getBytes());
-//        }
-//
-//
-//        FileSystemResource fileResource = new FileSystemResource(privateKeyFile);
-//
-//        HttpHeaders headers = new HttpHeaders();
-//        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-//        headers.setContentDispositionFormData("attachment", "privateKey.pem"); // Zamijenite ekstenzijom datoteke prema potrebi
-//
-//        return ResponseEntity.ok()
-//                .headers(headers)
-//                .body(fileResource);
     }
 
     @PostMapping("/verify/upload")
