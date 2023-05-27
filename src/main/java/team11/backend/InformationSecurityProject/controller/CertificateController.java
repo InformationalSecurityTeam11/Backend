@@ -187,24 +187,37 @@ public class CertificateController {
             return new ResponseEntity<>("Certificate not found", HttpStatus.OK);
         }
         PrivateKey privateKey = this.certificateService.getPrivateKey(serial);
-        String privateKeyBase64 = Base64.getEncoder().encodeToString(privateKey.getEncoded());
-
-        File privateKeyFile = File.createTempFile("privateKey", ".pem");
-
-        try (FileOutputStream fos = new FileOutputStream(privateKeyFile)) {
-            fos.write(privateKeyBase64.getBytes());
-        }
-
-
-        FileSystemResource fileResource = new FileSystemResource(privateKeyFile);
-
+        byte[] privateKeyEncoded = privateKey.getEncoded();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        outputStream.write("-----BEGIN PRIVATE KEY-----\n".getBytes());
+        outputStream.write(Base64.getEncoder().encode(privateKeyEncoded));
+        outputStream.write("\n-----END PRIVATE KEY-----\n".getBytes());
+        byte[] fileData = outputStream.toByteArray();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-        headers.setContentDispositionFormData("attachment", "privateKey.pem"); // Zamijenite ekstenzijom datoteke prema potrebi
+        headers.setContentDispositionFormData("attachment", "privateKey.pem");
+        headers.setContentLength(fileData.length);
+        return new ResponseEntity<byte[]>(fileData, headers, HttpStatus.OK);
 
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(fileResource);
+
+//        String privateKeyBase64 = Base64.getEncoder().encodeToString(privateKey.getEncoded());
+//
+//        File privateKeyFile = File.createTempFile("privateKey", ".pem");
+//
+//        try (FileOutputStream fos = new FileOutputStream(privateKeyFile)) {
+//            fos.write(privateKeyBase64.getBytes());
+//        }
+//
+//
+//        FileSystemResource fileResource = new FileSystemResource(privateKeyFile);
+//
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+//        headers.setContentDispositionFormData("attachment", "privateKey.pem"); // Zamijenite ekstenzijom datoteke prema potrebi
+//
+//        return ResponseEntity.ok()
+//                .headers(headers)
+//                .body(fileResource);
     }
 
     @PostMapping("/verify/upload")
