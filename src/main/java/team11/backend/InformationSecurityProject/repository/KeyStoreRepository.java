@@ -1,5 +1,6 @@
 package team11.backend.InformationSecurityProject.repository;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import java.security.cert.X509Certificate;
 import java.util.Enumeration;
@@ -19,7 +20,9 @@ import java.util.Optional;
 @Repository
 public class KeyStoreRepository {
     private final KeyStore keyStore;
-    private final String SECRET = "changeit";
+
+    @Value("${app.keystore-password}")
+    private String SECRET;
     private final String KEYSTORE_FILENAME = "./src/main/java/team11/backend/InformationSecurityProject/cert/keystore.jks";
     private boolean initialize = true;
     public KeyStoreRepository(){

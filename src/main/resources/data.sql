@@ -6,7 +6,7 @@ INSERT INTO USERS (user_type, email, last_password_reset_date, name, password, s
 VALUES ('STANDARD','aleksandrab024@hotmail.com', '2023-05-01T04:49:27Z', 'Aleksandra', '$2a$10$iZZWXRF1TFvTNwq9pobYRO8SmuQ9ALEDGtEy4iXNG.bihvOwEJttu', 'Balazevic', '0600538922', '2', 'true'),
        ('STANDARD','vladadevic@gmail.com', '2023-05-01T04:49:27Z', 'Vlada', '$2a$10$iZZWXRF1TFvTNwq9pobYRO8SmuQ9ALEDGtEy4iXNG.bihvOwEJttu', 'Devic', '0613191670', '2', 'true'),
        ('ADMIN','markomarkovic@gmail.com', '2023-05-01T04:49:27Z', 'Marko', '$2a$10$iZZWXRF1TFvTNwq9pobYRO8SmuQ9ALEDGtEy4iXNG.bihvOwEJttu', 'Markovic>', '0612638823', '1', 'true'),
-       ('STANDARD','vlada.devic.2001@gmail.com', '2023-05-07T04:49:27Z', 'Vlada', '$2a$10$iZZWXRF1TFvTNwq9pobYRO8SmuQ9ALEDGtEy4iXNG.bihvOwEJttu', 'Devic', '0613191670', '2', 'true'),
+       ('STANDARD','vlada.devic.2001@gmail.com', '2023-06-07T04:49:27Z', 'Vlada', '$2a$10$iZZWXRF1TFvTNwq9pobYRO8SmuQ9ALEDGtEy4iXNG.bihvOwEJttu', 'Devic', '0613191670', '2', 'true'),
        ('STANDARD','sarabubnjevic3@gmail.com', '2023-05-07T04:49:27Z', 'Sara', '$2a$10$iZZWXRF1TFvTNwq9pobYRO8SmuQ9ALEDGtEy4iXNG.bihvOwEJttu', 'Bubnjevic', '0613191670', '2', 'true'),
        ('ADMIN','veljkobubnjevic01@gmail.com', '2023-05-01T04:49:27Z', 'Veljko', '$2a$10$iZZWXRF1TFvTNwq9pobYRO8SmuQ9ALEDGtEy4iXNG.bihvOwEJttu', 'Bubnjevic', '0612638823', '1', 'true');
 
