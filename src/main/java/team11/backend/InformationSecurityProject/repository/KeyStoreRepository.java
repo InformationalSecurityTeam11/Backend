@@ -20,7 +20,7 @@ import java.util.Optional;
 public class KeyStoreRepository {
     private final KeyStore keyStore;
     private final String SECRET = "changeit";
-    private final String KEYSTORE_FILENAME = "./src/main/java/team11/backend/InformationSecurityProject/cert/keystore.jks";
+    private final String KEYSTORE_FILENAME = "./src/main/java/team11/backend/InformationSecurityProject/app_cert/keystore.jks";
     private boolean initialize = true;
     public KeyStoreRepository(){
         try {
