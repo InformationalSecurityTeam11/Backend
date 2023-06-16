@@ -33,7 +33,8 @@ public class UserController {
     private final AuthService authService;
 
     @Autowired
-    public UserController(StandardUserService standardUserService, CertificateRequestService certificateRequestService, AccountActivationService accountActivationService, UserService userService, AuthService authService){
+    public UserController(StandardUserService standardUserService, CertificateRequestService certificateRequestService, AccountActivationService accountActivationService,
+                          UserService userService, AuthService authService){
 
         this.standardUserService = standardUserService;
         this.certificateRequestService = certificateRequestService;
@@ -67,6 +68,22 @@ public class UserController {
     public ResponseEntity<TokenStateOut> confirmLogin(@NotNull(message = "Field (verificationCode) is required")
                                                           @PathVariable(value = "verificationCode") Integer verificationCode){
         return new ResponseEntity<>(authService.confirmLogin(verificationCode), HttpStatus.OK);
+    }
+
+    @PostMapping("/oauth")
+    public ResponseEntity<Object> oauthSignIn(@Valid @RequestBody OAuthUserDTO userDTO){
+        Boolean isRegistered = this.userService.oauthDoesMailExists(userDTO);
+        if (isRegistered){
+            User userDetails = this.userService.findUserByEmail(userDTO.getEmail());
+            String tokenValue = this.authService.generateToken(userDetails);
+            String refreshToken = this.authService.generateRefreshToken(userDetails);
+            TokenStateOut token = new TokenStateOut(tokenValue, refreshToken);
+            return new ResponseEntity<>(token, HttpStatus.OK);
+        }else{
+            UserOut newUser = this.userService.regsterOauth(userDTO);
+            return new ResponseEntity<>(newUser, HttpStatus.OK);
+        }
+
     }
 
     @GetMapping(

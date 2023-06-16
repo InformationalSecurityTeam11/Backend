@@ -68,6 +68,7 @@ public class WebSecurityConfig {
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         http.csrf().disable();
         http.cors();
+        http.headers().xssProtection().and().contentSecurityPolicy("script-src 'self'");
         http.headers().frameOptions().disable();
         http.authorizeHttpRequests()
                 .requestMatchers(HttpMethod.POST, "/api/user/register").permitAll()
@@ -76,6 +77,7 @@ public class WebSecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/user/password/reset/request").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/user/password/reset/*").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/user/logout").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/user/oauth").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/user/activate/*").permitAll()
                 .anyRequest().authenticated().and()
                 .exceptionHandling().accessDeniedHandler(this.restAccessDeniedHandler).and()
