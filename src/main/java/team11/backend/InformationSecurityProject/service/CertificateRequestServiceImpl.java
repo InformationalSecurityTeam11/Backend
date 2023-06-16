@@ -139,7 +139,8 @@ public class CertificateRequestServiceImpl implements CertificateRequestService 
 
     @Override
     public Set<RequestInfoDTO> getRequestsDTOS(List<CertificateRequest> requests) {
-        if(requests.size() == 0) return null;
+        if(requests.size() == 0)
+            return new HashSet<>();
         Set<RequestInfoDTO> certificateRequests = new HashSet<>();
         for(CertificateRequest r : requests){
             certificateRequests.add(new RequestInfoDTO(r, r.getOwner()));

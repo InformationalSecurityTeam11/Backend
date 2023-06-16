@@ -236,9 +236,12 @@ public class TokenUtils {
         final Date created = getIssuedAtDateFromToken(token);
 
         // Token je validan kada:
-        return (username != null // korisnicko ime nije null
+         Boolean a = (username != null // korisnicko ime nije null
                 && username.equals(userDetails.getUsername()) // korisnicko ime iz tokena se podudara sa korisnickom imenom koje pise u bazi
                 && !isCreatedBeforeLastPasswordReset(created, user.getLastPasswordResetDate())); // nakon kreiranja tokena korisnik nije menjao svoju lozinku
+
+        System.out.println("vraceno: " + a);
+        return a;
     }
 
     /**

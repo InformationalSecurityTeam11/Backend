@@ -24,7 +24,7 @@ public class KeyStoreRepository {
     @Value("${app.keystore-password}")
     private String SECRET;
     private final String KEYSTORE_FILENAME = "./src/main/java/team11/backend/InformationSecurityProject/cert/keystore.jks";
-    private boolean initialize = true;
+    private boolean initialize = false;
     public KeyStoreRepository(){
         try {
             this.keyStore = KeyStore.getInstance("JKS", "SUN");
