@@ -46,3 +46,4 @@ build/
 
 *.jks
 /cert/
+/app_cert/
