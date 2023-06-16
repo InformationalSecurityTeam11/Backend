@@ -22,6 +22,8 @@ public class UserIn {
     private String email;
     @Size(min=6, max = 30, message = "Field (password) cannot be less than 6 characters and more than 30 characters long")
     private String password;
+    @NotBlank(message = "Recaptcha response is required")
+    private String recaptchaResponse;
     @NotNull(message = "Field (activationMethod) is required")
     private AccountActivationMethod activationMethod;
 }

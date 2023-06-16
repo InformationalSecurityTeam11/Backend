@@ -19,6 +19,9 @@ public class LoginCredentials {
     @Size(min=6,max = 30,message = "Field (password) cannot be less than 6 characters and more than 30 characters long")
     private String password;
 
+    @NotBlank(message = "RecaptchaResponse is required")
+    private String recaptchaResponse;
+
     public LoginCredentials(String email, String password) {
         this.setEmail(email);
         this.setPassword(password);

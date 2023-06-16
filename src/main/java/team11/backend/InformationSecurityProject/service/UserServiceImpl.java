@@ -19,10 +19,7 @@ import team11.backend.InformationSecurityProject.service.interfaces.UserService;
 
 import java.sql.Timestamp;
 import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Date;
-import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -32,15 +29,17 @@ public class UserServiceImpl implements UserService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final MailService mailService;
     private final RoleService roleService;
+    private final  CaptchaService captchaService;
     private final VerificationCodeRepository verificationCodeRepository;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, RoleService roleService, BCryptPasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, MailService mailService, VerificationCodeRepository verificationCodeRepository, AuthenticationManager authenticationManager1){
+    public UserServiceImpl(UserRepository userRepository, RoleService roleService, BCryptPasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, MailService mailService, VerificationCodeRepository verificationCodeRepository, AuthenticationManager authenticationManager1, CaptchaService captchaService){
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.mailService = mailService;
         this.roleService = roleService;
         this.verificationCodeRepository = verificationCodeRepository;
+        this.captchaService = captchaService;
     }
 
     @Override

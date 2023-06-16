@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import team11.backend.InformationSecurityProject.dto.*;
 import team11.backend.InformationSecurityProject.exceptions.BadRequestException;
 import team11.backend.InformationSecurityProject.model.*;
+import team11.backend.InformationSecurityProject.service.CaptchaService;
 import team11.backend.InformationSecurityProject.service.interfaces.*;
 
 import java.util.ArrayList;
@@ -31,22 +32,28 @@ public class UserController {
     private final AccountActivationService accountActivationService;
     private final UserService userService;
     private final AuthService authService;
+    private  final CaptchaService captchaService;
 
     @Autowired
     public UserController(StandardUserService standardUserService, CertificateRequestService certificateRequestService, AccountActivationService accountActivationService,
-                          UserService userService, AuthService authService){
+                          UserService userService, AuthService authService, CaptchaService captchaService){
 
         this.standardUserService = standardUserService;
         this.certificateRequestService = certificateRequestService;
         this.accountActivationService = accountActivationService;
         this.userService = userService;
         this.authService = authService;
+        this.captchaService = captchaService;
     }
     @PostMapping(
             value = "/register",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public ResponseEntity<UserOut> registerStandardUser(@RequestBody @Valid UserIn userDTO){
+        boolean captchaVerified = captchaService.verify(userDTO.getRecaptchaResponse());
+        if(!captchaVerified) {
+            throw new BadRequestException("Invalid recaptcha token");
+        }
         StandardUser user = standardUserService.register(userDTO);
         UserOut userOut = new UserOut(user);
         return new ResponseEntity<>(userOut, HttpStatus.OK);
@@ -56,6 +63,10 @@ public class UserController {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public ResponseEntity<?> login(@RequestBody @Valid LoginCredentials credentials){
+        boolean captchaVerified = captchaService.verify(credentials.getRecaptchaResponse());
+        if(!captchaVerified) {
+            throw new BadRequestException("Invalid recaptcha token");
+        }
         String message = authService.login(credentials);
         HashMap<String, String> response = new HashMap<>();
         response.put("message", message);
