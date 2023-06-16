@@ -96,7 +96,9 @@ public class UserServiceImpl implements UserService {
         if(!passwordResetDTO.getNewPassword().equals(passwordResetDTO.getNewPasswordConfirmation())){
             throw new BadRequestException("Passwords are not matching");
         }
-
+        if(passwordEncoder.matches(passwordResetDTO.getNewPassword(), user.getPassword())){
+            throw new BadRequestException("New password cannot be previous password");
+        }
         if(user.getOldPasswords().stream().anyMatch(oldPassword -> passwordEncoder.matches(passwordResetDTO.getNewPassword(), oldPassword))){
             throw new BadRequestException("New password cannot be previous password");
         }
