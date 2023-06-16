@@ -86,4 +86,14 @@ public class AuthServiceImpl implements AuthService {
 
         return "Check your email for verification code";
     }
+
+    @Override
+    public String generateToken(User user) {
+        return this.tokenUtils.generateToken(user);
+    }
+
+    @Override
+    public String generateRefreshToken(User user) {
+        return this.refreshTokenService.createRefreshToken(user).getToken();
+    }
 }

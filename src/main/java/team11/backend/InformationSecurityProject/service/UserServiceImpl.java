@@ -4,20 +4,25 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import team11.backend.InformationSecurityProject.dto.OAuthUserDTO;
 import team11.backend.InformationSecurityProject.dto.PasswordResetDTO;
 import team11.backend.InformationSecurityProject.dto.PasswordResetRequestDTO;
+import team11.backend.InformationSecurityProject.dto.UserOut;
 import team11.backend.InformationSecurityProject.exceptions.BadRequestException;
 import team11.backend.InformationSecurityProject.exceptions.NotFoundException;
-import team11.backend.InformationSecurityProject.model.AccountActivationMethod;
-import team11.backend.InformationSecurityProject.model.VerificationCode;
-import team11.backend.InformationSecurityProject.model.User;
-import team11.backend.InformationSecurityProject.model.VerificationCodeType;
+import team11.backend.InformationSecurityProject.model.*;
 import team11.backend.InformationSecurityProject.repository.VerificationCodeRepository;
 import team11.backend.InformationSecurityProject.repository.UserRepository;
 import team11.backend.InformationSecurityProject.service.interfaces.MailService;
+import team11.backend.InformationSecurityProject.service.interfaces.RoleService;
 import team11.backend.InformationSecurityProject.service.interfaces.UserService;
 
+import java.sql.Timestamp;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -26,13 +31,15 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final MailService mailService;
+    private final RoleService roleService;
     private final VerificationCodeRepository verificationCodeRepository;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, MailService mailService, VerificationCodeRepository verificationCodeRepository, AuthenticationManager authenticationManager1){
+    public UserServiceImpl(UserRepository userRepository, RoleService roleService, BCryptPasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, MailService mailService, VerificationCodeRepository verificationCodeRepository, AuthenticationManager authenticationManager1){
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.mailService = mailService;
+        this.roleService = roleService;
         this.verificationCodeRepository = verificationCodeRepository;
     }
 
@@ -101,4 +108,44 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
         verificationCodeRepository.delete(verificationCode);
     }
+
+    private boolean emailExists(String email){
+        Optional<User> user = this.userRepository.findUserByEmail(email);
+        return user.isPresent();
+    }
+
+    private User getUserFromOauthUserDTO(OAuthUserDTO oauthUserDTO){
+        StandardUser user = new StandardUser();
+        user.setEmail(oauthUserDTO.getEmail());
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+        user.setPassword(passwordEncoder.encode("123456"));
+        Role role = roleService.findRoleByName("ROLE_STANDARD");
+        user.setRole(role);
+        user.setTelephoneNumber("+0238623716");
+        user.setSurname(oauthUserDTO.getSurname());
+        user.setName(oauthUserDTO.getName());
+        user.setLastPasswordResetDate(new Timestamp(new Date().getTime()));
+        user.setEnabled(true);
+        user = this.userRepository.save(user);
+        return user;
+    }
+
+    @Override
+    public Boolean oauthDoesMailExists(OAuthUserDTO userDTO) {
+        return this.emailExists(userDTO.getEmail());
+    }
+
+    @Override
+    public UserOut regsterOauth(OAuthUserDTO userDTO) {
+        User user = getUserFromOauthUserDTO(userDTO);
+        return new UserOut(user);
+    }
+
+    @Override
+    public User findUserByEmail(String email) {
+        return this.userRepository.findUserByEmail(email).orElse(null);
+    }
+
+
 }

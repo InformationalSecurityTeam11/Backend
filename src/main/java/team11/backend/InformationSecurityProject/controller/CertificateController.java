@@ -136,7 +136,9 @@ public class CertificateController {
 
         if (user.getUserType().equals("ADMIN"))
             requests = this.certificateRequestService.getAll();
-        else requests = this.certificateRequestService.getCertificateRequestByOwner(user);
+        else
+            requests = this.certificateRequestService.getCertificateRequestByOwner(user);
+
         return new ResponseEntity<>(this.certificateRequestService.getRequestsDTOS(requests), HttpStatus.OK);
 
 
