@@ -70,6 +70,7 @@ public class WebSecurityConfig {
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         http.csrf().disable();
         http.cors();
+        http.headers().xssProtection().and().contentSecurityPolicy("script-src 'self'");
         http.headers().frameOptions().disable();
         http.authorizeHttpRequests()
                 .requestMatchers(HttpMethod.POST, "/api/user/register").permitAll()
