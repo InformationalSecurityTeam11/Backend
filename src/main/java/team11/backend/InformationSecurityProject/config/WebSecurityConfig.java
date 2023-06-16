@@ -15,14 +15,12 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import team11.backend.InformationSecurityProject.security.RestAccessDeniedHandler;
 import team11.backend.InformationSecurityProject.security.RestAuthenticationEntryPoint;
 import team11.backend.InformationSecurityProject.security.TokenAuthenticationFilter;
 import team11.backend.InformationSecurityProject.security.TokenUtils;
 import team11.backend.InformationSecurityProject.service.SecurityUserDetailsService;
 
-import static org.springframework.boot.autoconfigure.security.servlet.PathRequest.toH2Console;
 
 @Configuration
 @EnableWebSecurity
@@ -79,8 +77,7 @@ public class WebSecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/user/password/reset/*").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/user/logout").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/user/activate/*").permitAll()
-                .requestMatchers(toH2Console()).permitAll().
-                anyRequest().authenticated().and()
+                .anyRequest().authenticated().and()
                 .exceptionHandling().accessDeniedHandler(this.restAccessDeniedHandler).and()
                 .exceptionHandling().authenticationEntryPoint(this.restAuthenticationEntryPoint).and()
                 .addFilterBefore(new TokenAuthenticationFilter(this.tokenUtils, this.userDetailsService()),
