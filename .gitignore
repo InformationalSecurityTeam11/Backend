@@ -43,3 +43,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+*.jks
+/cert/
+logfile.log
+/app_cert/

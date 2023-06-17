@@ -20,11 +20,11 @@ public class TokenUtils {
     private String APP_NAME;
 
     // Tajna koju samo backend aplikacija treba da zna kako bi mogla da generise i proveri JWT https://jwt.io/
-    @Value("sorcererstone")
+    @Value("${app.jwt-secret}")
     public String SECRET;
 
-    // Period vazenja tokena - 30 minuta
-    @Value("1800000")
+    // Period vazenja tokena - 3 minuta
+    @Value("${app.token-duration}")
     private int ACCESS_TOKEN_EXPIRES_IN;
 
     // Naziv headera kroz koji ce se prosledjivati JWT u komunikaciji server-klijent
@@ -236,9 +236,12 @@ public class TokenUtils {
         final Date created = getIssuedAtDateFromToken(token);
 
         // Token je validan kada:
-        return (username != null // korisnicko ime nije null
+         Boolean a = (username != null // korisnicko ime nije null
                 && username.equals(userDetails.getUsername()) // korisnicko ime iz tokena se podudara sa korisnickom imenom koje pise u bazi
                 && !isCreatedBeforeLastPasswordReset(created, user.getLastPasswordResetDate())); // nakon kreiranja tokena korisnik nije menjao svoju lozinku
+
+        System.out.println("vraceno: " + a);
+        return a;
     }
 
     /**

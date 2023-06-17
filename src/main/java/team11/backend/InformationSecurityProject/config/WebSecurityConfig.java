@@ -21,7 +21,6 @@ import team11.backend.InformationSecurityProject.security.TokenAuthenticationFil
 import team11.backend.InformationSecurityProject.security.TokenUtils;
 import team11.backend.InformationSecurityProject.service.SecurityUserDetailsService;
 
-import static org.springframework.boot.autoconfigure.security.servlet.PathRequest.toH2Console;
 
 @Configuration
 @EnableWebSecurity
@@ -69,10 +68,18 @@ public class WebSecurityConfig {
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         http.csrf().disable();
         http.cors();
+        http.headers().xssProtection().and().contentSecurityPolicy("script-src 'self'");
         http.headers().frameOptions().disable();
-        http.authorizeHttpRequests().
-                requestMatchers(toH2Console()).permitAll().
-                anyRequest().authenticated().and()
+        http.authorizeHttpRequests()
+                .requestMatchers(HttpMethod.POST, "/api/user/register").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/user/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/user/login/confirm/*").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/user/password/reset/request").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/user/password/reset/*").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/user/logout").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/user/oauth").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/user/activate/*").permitAll()
+                .anyRequest().authenticated().and()
                 .exceptionHandling().accessDeniedHandler(this.restAccessDeniedHandler).and()
                 .exceptionHandling().authenticationEntryPoint(this.restAuthenticationEntryPoint).and()
                 .addFilterBefore(new TokenAuthenticationFilter(this.tokenUtils, this.userDetailsService()),

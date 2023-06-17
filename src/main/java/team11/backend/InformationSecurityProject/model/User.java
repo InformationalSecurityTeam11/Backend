@@ -3,6 +3,7 @@ package team11.backend.InformationSecurityProject.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -15,6 +16,7 @@ import java.util.*;
 @Table(name="users")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "user_type", discriminatorType = DiscriminatorType.STRING)
+
 public abstract class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,21 +31,29 @@ public abstract class User implements UserDetails {
     private String telephoneNumber;
     @Column(name = "email", nullable = false, unique = true)
     private String email;
-    @ElementCollection(fetch = FetchType.LAZY)
+    @ElementCollection(fetch = FetchType.EAGER)
     @Column(name = "old_password")
     private List<String> oldPasswords;
     @Column(name = "password", nullable = false)
     private String password;
+    @Column(name = "is_enabled", nullable = false)
+    private boolean isEnabled;
+    @Column(name = "last_password_reset_date")
+    private Timestamp lastPasswordResetDate;
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id", nullable = false)
+    private Role role;
+
     public void setPassword(String password){
+        if(oldPasswords != null){
+            oldPasswords.add(password);
+        }else {
+            oldPasswords = List.of(password);
+        }
         Timestamp now = new Timestamp((new Date()).getTime());
         this.setLastPasswordResetDate(now);
         this.password = password;
     }
-    @Column(name = "last_password_reset_date")
-    private Timestamp lastPasswordResetDate;
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "role_id", nullable = false)
-    private Role role;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -69,14 +79,15 @@ public abstract class User implements UserDetails {
     public boolean isCredentialsNonExpired() {
         Calendar cal = Calendar.getInstance();
         cal.setTime(new Date());
-        cal.add(Calendar.DATE, -30);
-        Date dateBefore30Days = cal.getTime();
+        cal.add(Calendar.SECOND, -2592000);
+        Date dateBeforeXDays = cal.getTime();
 
-        return !this.lastPasswordResetDate.before(dateBefore30Days);
+        return !this.lastPasswordResetDate.before(dateBeforeXDays);
     }
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return this.isEnabled;
     }
+
 }
