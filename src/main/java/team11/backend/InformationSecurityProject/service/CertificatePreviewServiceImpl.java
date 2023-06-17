@@ -40,10 +40,7 @@ public class CertificatePreviewServiceImpl implements CertificatePreviewService 
     @Override
     public Certificate getBySerial(BigInteger serialNumber){
         Optional<Certificate> certificateOpt = certificateRepository.findCertificateBySerialNumber(serialNumber);
-        if(certificateOpt.isEmpty()){
-            throw new NotFoundException("Certificate with given serial number does not exist");
-        }
-        return certificateOpt.get();
+        return certificateOpt.orElse(null);
     }
 
 
@@ -51,6 +48,13 @@ public class CertificatePreviewServiceImpl implements CertificatePreviewService 
     public CertificateValidationObject validateCertificate(BigInteger serialNumber) {
 
         Certificate certificate = getBySerial(serialNumber);
+        if (certificate == null) {
+            return null;
+        }
+
+        if (certificate.getRevoke() != null) {
+            return new CertificateValidationObject(certificate, false);
+        }
         LocalDate currentDate = LocalDateTime.now().toLocalDate();
         LocalDate startDate = certificate.getStartDate().toLocalDate();
         LocalDate expireDate = certificate.getExpireDate().toLocalDate();
@@ -65,7 +69,11 @@ public class CertificatePreviewServiceImpl implements CertificatePreviewService 
         try {
             CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
             X509Certificate certificate = (X509Certificate) certificateFactory.generateCertificate(inputStream);
-
+            BigInteger serialNumber = certificate.getSerialNumber();
+            Certificate cer = this.certificateRepository.findCertificateBySerialNumber(serialNumber).orElse(null);
+           if (cer != null)
+            if (cer.getRevoke() != null)
+                return false;
             certificate.checkValidity();
 
             return true;

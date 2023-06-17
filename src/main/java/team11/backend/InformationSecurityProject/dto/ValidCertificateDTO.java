@@ -25,4 +25,10 @@ public class ValidCertificateDTO {
         this.startDate = certificate.getStartDate().toLocalDate();
         this.expiredDate = certificate.getExpireDate().toLocalDate();
     }
+
+    public ValidCertificateDTO(boolean valid, LocalDate startDate, LocalDate expiredDate) {
+        this.valid = valid;
+        this.startDate = startDate;
+        this.expiredDate = expiredDate;
+    }
 }

@@ -40,6 +40,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import java.math.BigInteger;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
 import java.util.Set;
@@ -102,7 +104,12 @@ public class CertificateController {
     @PreAuthorize("hasAnyRole('STANDARD', 'ADMIN')")
     public ResponseEntity<ValidCertificateDTO> validateCertificate(@RequestBody @Valid ValidateCertificateDTO validateCertificateDTO){
         CertificatePreviewService.CertificateValidationObject validationObject = this.certificatePreviewService.validateCertificate(validateCertificateDTO.getSerialNumber());
-        return new ResponseEntity<>(new ValidCertificateDTO(validationObject.certificate, validationObject.isValid), HttpStatus.OK);
+        if (validationObject == null) {
+            ValidCertificateDTO dto = new ValidCertificateDTO(false, LocalDate.now(), LocalDate.now());
+            return new ResponseEntity<>(dto, HttpStatus.OK);
+
+        }
+         return new ResponseEntity<>(new ValidCertificateDTO(validationObject.certificate, validationObject.isValid), HttpStatus.OK);
     }
 
     @PostMapping(
